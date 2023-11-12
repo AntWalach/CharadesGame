@@ -12,24 +12,17 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
+import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
-public class HelloApplication extends Application {
-
+public class HelloApplication extends Application implements ServerListener {
     private TextArea chatArea = new TextArea();
     private TextField inputField = new TextField();
     private Canvas canvas;
     private GraphicsContext gc;
 
     private static final int PORT = 3000;
-    private static List<Socket> clientSockets = new ArrayList<>();
+    private Socket socket;
 
     public static void main(String[] args) {
         launch(args);
@@ -156,7 +149,13 @@ public class HelloApplication extends Application {
         String message = inputField.getText();
         if (!message.isEmpty()) {
             chatArea.appendText("You: " + message + "\n");
+            sendMessage(message, socket);
             inputField.clear();
         }
+    }
+
+    @Override
+    public void onMessageReceived(String message) {
+        Platform.runLater(() -> chatArea.appendText("Server: " + message + "\n"));
     }
 }
