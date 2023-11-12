@@ -1,6 +1,7 @@
 package com.example.punsapp;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -11,16 +12,31 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
 public class HelloApplication extends Application {
 
     private TextArea chatArea = new TextArea();
     private TextField inputField = new TextField();
-
     private Canvas canvas;
     private GraphicsContext gc;
 
+    private static final int PORT = 3000;
+    private static List<Socket> clientSockets = new ArrayList<>();
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) throws IOException {
         primaryStage.setTitle("JavaFX Combined App");
 
         // Drawing Tab
@@ -37,6 +53,41 @@ public class HelloApplication extends Application {
         Scene scene = new Scene(splitPane, 600, 400);
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        Socket serverSocket = new Socket("localhost", PORT);
+
+        inputField.setOnAction(e -> {
+            sendMessage(inputField.getText(), serverSocket);
+            inputField.clear();
+        });
+
+        Thread serverListenerThread = new Thread(() -> {
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
+                String message;
+                while ((message = in.readLine()) != null) {
+                    System.out.println("Received message from server: " + message);
+
+                    // Aktualizuj interfejs użytkownika z otrzymaną wiadomością
+                    //Platform.runLater(() -> chatArea.appendText("Server: " + message + "\n"));
+                    chatArea.appendText("Server: " + message + "\n");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        serverListenerThread.setDaemon(true);
+        serverListenerThread.start();
+    }
+
+    private void sendMessage(String message, Socket serverSocket) {
+        try {
+            PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+            out.println(message);
+            System.out.println("Sent message to server: " + message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private Pane createDrawingTab() {
@@ -107,9 +158,5 @@ public class HelloApplication extends Application {
             chatArea.appendText("You: " + message + "\n");
             inputField.clear();
         }
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }
