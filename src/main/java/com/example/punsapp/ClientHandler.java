@@ -31,8 +31,20 @@ public class ClientHandler implements Runnable {
             while ((message = in.readLine()) != null) {
                 System.out.println("Received message: " + message);
 
-                // Przekazanie wiadomości do interfejsu ServerListener
-                serverListener.onMessageReceived(message);
+                if (message.startsWith("COORDINATES")) {
+                    // Extract x and y coordinates from the message
+                    String[] parts = message.split(" ");
+                    if (parts.length >= 3) {
+                        double x = Double.parseDouble(parts[1]);
+                        double y = Double.parseDouble(parts[2]);
+
+                        // Broadcast the coordinates to other clients
+                        serverListener.onCoordinatesReceived(x, y);
+                    }
+                } else {
+                    // For other message types, broadcast as usual
+                    serverListener.onChatMessageReceived(message);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

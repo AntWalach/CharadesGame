@@ -22,7 +22,10 @@ public class HelloApplication extends Application implements ServerListener {
     private GraphicsContext gc;
 
     private static final int PORT = 3000;
-    private Socket socket;
+    Socket serverSocket = new Socket("localhost", PORT);
+
+    public HelloApplication() throws IOException {
+    }
 
     public static void main(String[] args) {
         launch(args);
@@ -47,8 +50,6 @@ public class HelloApplication extends Application implements ServerListener {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        Socket serverSocket = new Socket("localhost", PORT);
-
         inputField.setOnAction(e -> {
             sendMessage(inputField.getText(), serverSocket);
             inputField.clear();
@@ -61,9 +62,20 @@ public class HelloApplication extends Application implements ServerListener {
                 while ((message = in.readLine()) != null) {
                     System.out.println("Received message from server: " + message);
 
-                    // Aktualizuj interfejs użytkownika z otrzymaną wiadomością
-                    //Platform.runLater(() -> chatArea.appendText("Server: " + message + "\n"));
-                    chatArea.appendText("Server: " + message + "\n");
+                    // Parse the received message for coordinates
+                    String[] parts = message.split(" ");
+                    if (parts.length >= 3 && parts[0].equals("COORDINATES")) {
+                        double x = Double.parseDouble(parts[1]);
+                        double y = Double.parseDouble(parts[2]);
+
+                        // Process x and y coordinates...
+                        // For example, update the canvas or perform any other action
+                        Platform.runLater(() -> handleReceivedCoordinates(x, y));
+                    } else {
+                        // For other types of messages, handle them accordingly
+                        String finalMessage = message;
+                        Platform.runLater(() -> chatArea.appendText("Server: " + finalMessage + "\n"));
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -72,6 +84,16 @@ public class HelloApplication extends Application implements ServerListener {
         serverListenerThread.setDaemon(true);
         serverListenerThread.start();
     }
+
+
+    private void handleReceivedCoordinates(double x, double y) {
+        Platform.runLater(() -> {
+            // Draw on the canvas with the received coordinates
+            gc.setFill(Color.RED);
+            gc.fillOval(x, y, 3, 3); // Draw a small circle at the received coordinates
+        });
+    }
+
 
     private void sendMessage(String message, Socket serverSocket) {
         try {
@@ -98,15 +120,25 @@ public class HelloApplication extends Application implements ServerListener {
             gc.beginPath();
             gc.moveTo(e.getX(), e.getY());
             gc.stroke();
+
+            sendCoordinatesToServer(e.getX(), e.getY());
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
             gc.lineTo(e.getX(), e.getY());
             gc.stroke();
+
+            sendCoordinatesToServer(e.getX(), e.getY());
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+            //gc.closePath();
+            gc.lineTo(e.getX(), e.getY());
+            gc.stroke();
             gc.closePath();
+
+            // Send coordinates to the server
+            sendCoordinatesToServer(e.getX(), e.getY());
         });
 
         VBox drawingPane = new VBox(10);
@@ -133,9 +165,9 @@ public class HelloApplication extends Application implements ServerListener {
 
         // Input Field and Send Button
         inputField.setPromptText("Type your message...");
-        inputField.setOnAction(e -> sendMessage());
+        inputField.setOnAction(e -> sendMessage(inputField.getText()));
         Button sendButton = new Button("Send");
-        sendButton.setOnAction(e -> sendMessage());
+        sendButton.setOnAction(e -> sendMessage(inputField.getText()));
 
         VBox inputContainer = new VBox(10);
         inputContainer.setPadding(new Insets(10));
@@ -145,17 +177,34 @@ public class HelloApplication extends Application implements ServerListener {
         return borderPane;
     }
 
-    private void sendMessage() {
-        String message = inputField.getText();
-        if (!message.isEmpty()) {
-            chatArea.appendText("You: " + message + "\n");
-            sendMessage(message, socket);
-            inputField.clear();
+    private void sendMessage(String message) {
+        try {
+            PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+            out.println(message);
+            System.out.println("Sent message to server: " + message);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
+    private void sendCoordinatesToServer(double x, double y) {
+        // Send coordinates as x y
+        String coordinates = x + " " + y;
+        String message = "COORDINATES" + " " + coordinates;
+        sendMessage(message);
+    }
+
     @Override
-    public void onMessageReceived(String message) {
-        Platform.runLater(() -> chatArea.appendText("Server: " + message + "\n"));
+    public void onCoordinatesReceived(double x, double y) {
+        // Handle drawing coordinates received from the server
+        // For example, draw on the canvas using the coordinates (x, y)
+        handleReceivedCoordinates(x, y);
+    }
+
+    @Override
+    public void onChatMessageReceived(String message) {
+        // Handle chat message received from the server
+        // For example, display it in the chat interface
+        chatArea.appendText(message + "\n");
     }
 }
