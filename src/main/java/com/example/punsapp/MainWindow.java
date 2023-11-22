@@ -16,7 +16,10 @@ import java.io.*;
 import java.net.Socket;
 
 
-public class HelloApplication extends Application implements ServerListener {
+public class MainWindow extends Application implements ServerListener {
+
+    private final String username;
+
     private TextArea chatArea = new TextArea();
     private TextField inputField = new TextField();
     private Canvas canvas;
@@ -28,15 +31,13 @@ public class HelloApplication extends Application implements ServerListener {
     private long lastClearTime = 0;
     private static final long CLEAR_COOLDOWN = 1000; // Cooldown time in milliseconds
 
-    public HelloApplication() throws IOException {
-    }
-
-    public static void main(String[] args) {
-        launch(args);
+    public MainWindow(String username) throws IOException {
+        this.username = username;
     }
 
     @Override
     public void start(Stage primaryStage) throws IOException {
+
         primaryStage.setTitle("JavaFX Combined App");
 
         // Drawing Tab
