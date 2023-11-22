@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.net.Socket;
 
+
 public class HelloApplication extends Application implements ServerListener {
     private TextArea chatArea = new TextArea();
     private TextField inputField = new TextField();
@@ -23,6 +24,9 @@ public class HelloApplication extends Application implements ServerListener {
 
     private static final int PORT = 3000;
     Socket serverSocket = new Socket("localhost", PORT);
+
+    private long lastClearTime = 0;
+    private static final long CLEAR_COOLDOWN = 1000; // Cooldown time in milliseconds
 
     public HelloApplication() throws IOException {
     }
@@ -71,6 +75,9 @@ public class HelloApplication extends Application implements ServerListener {
                         // Process x and y coordinates...
                         // For example, update the canvas or perform any other action
                         Platform.runLater(() -> handleReceivedCoordinates(x, y));
+                    } else if (message.equals("CLEAR_CANVAS")) {
+                        // Handle clear canvas command
+                        Platform.runLater(this::clearCanvas);
                     } else {
                         // For other types of messages, handle them accordingly
                         String finalMessage = message;
@@ -85,15 +92,13 @@ public class HelloApplication extends Application implements ServerListener {
         serverListenerThread.start();
     }
 
-
     private void handleReceivedCoordinates(double x, double y) {
         Platform.runLater(() -> {
             // Draw on the canvas with the received coordinates
-            gc.setFill(Color.RED);
+            //gc.setFill(Color.RED);
             gc.fillOval(x, y, 3, 3); // Draw a small circle at the received coordinates
         });
     }
-
 
     private void sendMessage(String message, Socket serverSocket) {
         try {
@@ -111,7 +116,7 @@ public class HelloApplication extends Application implements ServerListener {
         gc.setLineWidth(2.0);
 
         Button clearButton = new Button("Clear");
-        clearButton.setOnAction(e -> clearCanvas());
+        clearButton.setOnAction(e -> handleClearButtonClick());
 
         ColorPicker colorPicker = new ColorPicker(Color.BLACK);
         colorPicker.setOnAction(e -> setPenColor(colorPicker.getValue()));
@@ -132,7 +137,6 @@ public class HelloApplication extends Application implements ServerListener {
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
-            //gc.closePath();
             gc.lineTo(e.getX(), e.getY());
             gc.stroke();
             gc.closePath();
@@ -146,8 +150,19 @@ public class HelloApplication extends Application implements ServerListener {
         return drawingPane;
     }
 
+    private void handleClearButtonClick() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
+            clearCanvas();
+            sendMessage("CLEAR_CANVAS");
+            lastClearTime = currentTime;
+        }
+    }
+
+
     private void clearCanvas() {
         gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+        sendMessage("CLEAR_CANVAS");
     }
 
     private void setPenColor(Color color) {
@@ -199,6 +214,11 @@ public class HelloApplication extends Application implements ServerListener {
         // Handle drawing coordinates received from the server
         // For example, draw on the canvas using the coordinates (x, y)
         handleReceivedCoordinates(x, y);
+    }
+
+    @Override
+    public void onClearCanvasReceived() {
+        Platform.runLater(this::clearCanvas);
     }
 
     @Override

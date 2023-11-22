@@ -41,7 +41,10 @@ public class ClientHandler implements Runnable {
                         // Broadcast the coordinates to other clients
                         serverListener.onCoordinatesReceived(x, y);
                     }
-                } else {
+                } else if (message.equals("CLEAR_CANVAS")) {
+                    // Broadcast the clear canvas command to other clients
+                    serverListener.onClearCanvasReceived();}
+                else {
                     // For other message types, broadcast as usual
                     serverListener.onChatMessageReceived(message);
                 }
