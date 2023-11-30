@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public class MainWindow extends Application implements ServerListener {
 
-    private String username = "user";
+    private String username;
     private TextArea chatArea = new TextArea();
     private TextField inputField = new TextField();
     private Canvas canvas;
@@ -39,7 +39,7 @@ public class MainWindow extends Application implements ServerListener {
     @Override
     public void start(Stage primaryStage) throws IOException {
 
-        primaryStage.setTitle("JavaFX Combined App");
+        primaryStage.setTitle("Charades Game");
 
         // Drawing Tab
         Pane drawingPane = createDrawingTab();
@@ -77,16 +77,13 @@ public class MainWindow extends Application implements ServerListener {
                         double x = message.getX();
                         double y = message.getY();
 
-                        // Process x and y coordinates...
-                        // For example, update the canvas or perform any other action
                         Platform.runLater(() -> handleReceivedCoordinates(x, y));
                     } else if (Objects.equals(message.getMessageType(), "CLEAR_CANVAS")) {
-                        // Handle clear canvas command
                         Platform.runLater(this::clearCanvas);
                     } else {
-                        // For other types of messages, handle them accordingly
+                        String messageUsername = message.getUsername();
                         String finalMessage = message.getChat();
-                        Platform.runLater(() -> chatArea.appendText("Server: " + finalMessage + "\n"));
+                        Platform.runLater(() -> chatArea.appendText(messageUsername + ": " + finalMessage + "\n"));
                     }
                 }
             } catch (IOException e) {
@@ -157,7 +154,6 @@ public class MainWindow extends Application implements ServerListener {
         }
     }
 
-
     private void clearCanvas() {
         gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
         Message message = new Message();
@@ -217,21 +213,17 @@ public class MainWindow extends Application implements ServerListener {
     }
 
     private void sendCoordinatesToServer(double x, double y) {
-        // Send coordinates as x y
-        String coordinates = x + " " + y;
-        //String message = "COORDINATES" + " " + coordinates;
         Message message = new Message();
         message.setUsername(username);
         message.setMessageType("XY");
         message.setX(x);
         message.setY(y);
+
         sendMessage(message, serverSocket);
     }
 
     @Override
     public void onCoordinatesReceived(double x, double y) {
-        // Handle drawing coordinates received from the server
-        // For example, draw on the canvas using the coordinates (x, y)
         handleReceivedCoordinates(x, y);
     }
 
@@ -242,8 +234,6 @@ public class MainWindow extends Application implements ServerListener {
 
     @Override
     public void onChatMessageReceived(String message) {
-        // Handle chat message received from the server
-        // For example, display it in the chat interface
         chatArea.appendText(message + "\n");
     }
 }

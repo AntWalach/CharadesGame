@@ -20,7 +20,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Login");
+        primaryStage.setTitle("Charades Game - Login");
 
         TextField usernameField = new TextField();
         usernameField.setPromptText("Enter username");
