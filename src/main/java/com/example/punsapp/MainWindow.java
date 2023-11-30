@@ -11,15 +11,16 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import com.google.gson.Gson;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Objects;
 
 
 public class MainWindow extends Application implements ServerListener {
 
-    private final String username;
-
+    private String username = "user";
     private TextArea chatArea = new TextArea();
     private TextField inputField = new TextField();
     private Canvas canvas;
@@ -56,32 +57,35 @@ public class MainWindow extends Application implements ServerListener {
         primaryStage.show();
 
         inputField.setOnAction(e -> {
-            sendMessage(inputField.getText(), serverSocket);
+            sendChat(inputField.getText());
             inputField.clear();
         });
 
         Thread serverListenerThread = new Thread(() -> {
             try {
                 BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
-                String message;
-                while ((message = in.readLine()) != null) {
-                    System.out.println("Received message from server: " + message);
+                String messageServer;
 
-                    // Parse the received message for coordinates
-                    String[] parts = message.split(" ");
-                    if (parts.length >= 3 && parts[0].equals("COORDINATES")) {
-                        double x = Double.parseDouble(parts[1]);
-                        double y = Double.parseDouble(parts[2]);
+                Gson gson = new Gson();
+
+                while ((messageServer = in.readLine()) != null) {
+                    System.out.println("Received message from server: " + messageServer);
+
+                    Message message = gson.fromJson(messageServer, Message.class);
+
+                    if (Objects.equals(message.getMessageType(), "XY")) {
+                        double x = message.getX();
+                        double y = message.getY();
 
                         // Process x and y coordinates...
                         // For example, update the canvas or perform any other action
                         Platform.runLater(() -> handleReceivedCoordinates(x, y));
-                    } else if (message.equals("CLEAR_CANVAS")) {
+                    } else if (Objects.equals(message.getMessageType(), "CLEAR_CANVAS")) {
                         // Handle clear canvas command
                         Platform.runLater(this::clearCanvas);
                     } else {
                         // For other types of messages, handle them accordingly
-                        String finalMessage = message;
+                        String finalMessage = message.getChat();
                         Platform.runLater(() -> chatArea.appendText("Server: " + finalMessage + "\n"));
                     }
                 }
@@ -99,16 +103,6 @@ public class MainWindow extends Application implements ServerListener {
             //gc.setFill(Color.RED);
             gc.fillOval(x, y, 3, 3); // Draw a small circle at the received coordinates
         });
-    }
-
-    private void sendMessage(String message, Socket serverSocket) {
-        try {
-            PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
-            out.println(message);
-            System.out.println("Sent message to server: " + message);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private Pane createDrawingTab() {
@@ -155,7 +149,10 @@ public class MainWindow extends Application implements ServerListener {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
             clearCanvas();
-            sendMessage("CLEAR_CANVAS");
+            Message message = new Message();
+            message.setUsername(username);
+            message.setMessageType("CLEAR_CANVAS");
+            sendMessage(message, serverSocket);
             lastClearTime = currentTime;
         }
     }
@@ -163,7 +160,10 @@ public class MainWindow extends Application implements ServerListener {
 
     private void clearCanvas() {
         gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
-        sendMessage("CLEAR_CANVAS");
+        Message message = new Message();
+        message.setUsername(username);
+        message.setMessageType("CLEAR_CANVAS");
+        sendMessage(message, serverSocket);
     }
 
     private void setPenColor(Color color) {
@@ -181,9 +181,9 @@ public class MainWindow extends Application implements ServerListener {
 
         // Input Field and Send Button
         inputField.setPromptText("Type your message...");
-        inputField.setOnAction(e -> sendMessage(inputField.getText()));
+        inputField.setOnAction(e -> sendChat(inputField.getText()));
         Button sendButton = new Button("Send");
-        sendButton.setOnAction(e -> sendMessage(inputField.getText()));
+        sendButton.setOnAction(e -> sendChat(inputField.getText()));
 
         VBox inputContainer = new VBox(10);
         inputContainer.setPadding(new Insets(10));
@@ -193,21 +193,39 @@ public class MainWindow extends Application implements ServerListener {
         return borderPane;
     }
 
-    private void sendMessage(String message) {
+    private void sendMessage(Message message, Socket serverSocket) {
         try {
             PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
-            out.println(message);
-            System.out.println("Sent message to server: " + message);
+
+            Gson gson = new Gson();
+            String json = gson.toJson(message);
+
+            out.println(json);
+            System.out.println("Sent message to server: " + json);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void sendChat(String chat) {
+        Message message = new Message();
+        message.setUsername(username);
+        message.setMessageType("CHAT");
+        message.setChat(chat);
+
+        sendMessage(message, serverSocket);
+    }
+
     private void sendCoordinatesToServer(double x, double y) {
         // Send coordinates as x y
         String coordinates = x + " " + y;
-        String message = "COORDINATES" + " " + coordinates;
-        sendMessage(message);
+        //String message = "COORDINATES" + " " + coordinates;
+        Message message = new Message();
+        message.setUsername(username);
+        message.setMessageType("XY");
+        message.setX(x);
+        message.setY(y);
+        sendMessage(message, serverSocket);
     }
 
     @Override

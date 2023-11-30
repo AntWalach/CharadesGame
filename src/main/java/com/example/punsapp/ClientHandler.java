@@ -1,6 +1,8 @@
 // ClientHandler.java
 package com.example.punsapp;
 
+import com.google.gson.Gson;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,26 +29,26 @@ public class ClientHandler implements Runnable {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            String message;
-            while ((message = in.readLine()) != null) {
-                System.out.println("Received message: " + message);
+            String messageServer;
+            while ((messageServer = in.readLine()) != null) {
+                System.out.println("Received message: " + messageServer);
 
-                if (message.startsWith("COORDINATES")) {
+                Gson gson = new Gson();
+
+                Message message = gson.fromJson(messageServer, Message.class);
+
+                if (message.getMessageType() == "COORDINATES") {
                     // Extract x and y coordinates from the message
-                    String[] parts = message.split(" ");
-                    if (parts.length >= 3) {
-                        double x = Double.parseDouble(parts[1]);
-                        double y = Double.parseDouble(parts[2]);
-
-                        // Broadcast the coordinates to other clients
-                        serverListener.onCoordinatesReceived(x, y);
-                    }
-                } else if (message.equals("CLEAR_CANVAS")) {
+                    double x = message.getX();
+                    double y = message.getY();
+                    // Broadcast the coordinates to other clients
+                    serverListener.onCoordinatesReceived(x, y);
+                } else if (message.getMessageType() == "CLEAR_CANVAS") {
                     // Broadcast the clear canvas command to other clients
                     serverListener.onClearCanvasReceived();}
                 else {
                     // For other message types, broadcast as usual
-                    serverListener.onChatMessageReceived(message);
+                    serverListener.onChatMessageReceived(message.chat);
                 }
             }
         } catch (IOException e) {
