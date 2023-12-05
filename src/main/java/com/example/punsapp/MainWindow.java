@@ -27,13 +27,15 @@ public class MainWindow extends Application implements ServerListener {
     private GraphicsContext gc;
 
     private static final int PORT = 3000;
-    Socket serverSocket = new Socket("localhost", PORT);
+    //Socket serverSocket = new Socket("localhost", PORT);
+    Socket serverSocket;
 
     private long lastClearTime = 0;
     private static final long CLEAR_COOLDOWN = 1000; // Cooldown time in milliseconds
 
-    public MainWindow(String username) throws IOException {
+    public MainWindow(String username, Socket serverSocket) throws IOException {
         this.username = username;
+        this.serverSocket = serverSocket;
     }
 
     @Override

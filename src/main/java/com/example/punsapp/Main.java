@@ -49,11 +49,8 @@ public class Main extends Application {
     }
 
     private void openMainApp(String username) throws IOException {
-        MainWindow mainApp = new MainWindow(username);
-        try {
-            mainApp.start(new Stage());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //MainWindow mainApp = new MainWindow(username);
+        WaitingRoom waitingRoom = new WaitingRoom(username);
+        waitingRoom.start(new Stage());
     }
 }

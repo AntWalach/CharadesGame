@@ -1,0 +1,122 @@
+package com.example.punsapp;
+
+import com.google.gson.Gson;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
+import java.util.Objects;
+
+public class WaitingRoom {
+    String username;
+    double waitingPlayersCount;
+
+    private static final int PORT = 3000;
+    Socket serverSocket = new Socket("localhost", PORT);
+
+    public WaitingRoom(String username) throws IOException {
+        this.username=username;
+        waitingPlayersCount = 0;
+    }
+
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Charades Game - Waiting room");
+
+        Label textField = new Label("Waiting players: " + waitingPlayersCount + "/4");
+
+        Button submitButton = new Button("Start");
+//        submitButton.setOnAction(e -> {
+//            if (!username.isEmpty()) {
+//                try {
+//                    openMainApp(username, serverSocket);
+//                    disconnectFromServer();
+//                } catch (IOException ex) {
+//                    throw new RuntimeException(ex);
+//                }
+//                primaryStage.close(); // Close the login window after submission
+//            }
+//        });
+
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(textField, submitButton);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(20));
+
+        Scene scene = new Scene(layout, 300, 200);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        Thread threadListener = new Thread(() -> {
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
+                String messageServer;
+
+                Gson gson = new Gson();
+
+                submitButton.setOnAction(e -> {
+                    if (!username.isEmpty()) {
+                        try {
+                            openMainApp(username, serverSocket);
+                            //disconnectFromServer();
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        primaryStage.close(); // Close the login window after submission
+                    }
+                });
+
+                while ((messageServer = in.readLine()) != null) {
+                    System.out.println("Received message from server: " + messageServer);
+
+                    Message message = gson.fromJson(messageServer, Message.class);
+
+                    if (Objects.equals(message.getMessageType(), "PLAYER_COUNT")) {
+                        waitingPlayersCount = message.getX();
+                        updatePlayerCountLabel(textField);
+                    } else if (Objects.equals(message.getMessageType(), "START")) {
+                        openMainApp(username, serverSocket);
+                    }
+                    else {
+                        System.out.println("ERROR WAITING ROOM");
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        threadListener.setDaemon(true);
+        threadListener.start();
+    }
+
+    private void openMainApp(String username, Socket serverSocket) throws IOException {
+        MainWindow mainApp = new MainWindow(username, serverSocket);
+        try {
+            mainApp.start(new Stage());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    private void disconnectFromServer() {
+//        try {
+//            serverSocket.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    private void updatePlayerCountLabel(Label label) {
+        Platform.runLater(() -> label.setText("Waiting players: " + waitingPlayersCount + "/4"));
+    }
+}
