@@ -34,6 +34,7 @@ public class MainWindow extends Application implements ServerListener {
 
     private long lastClearTime = 0;
     private static final long CLEAR_COOLDOWN = 1000; // Cooldown time in milliseconds
+    private boolean drawingPermission = false;
 
     public MainWindow(String username, Socket serverSocket) throws IOException {
         this.username = username;
@@ -87,6 +88,13 @@ public class MainWindow extends Application implements ServerListener {
                     } else if (Objects.equals(message.getMessageType(), "COUNTDOWN")) {
                         int countdownValue = (int) message.getX();
                         updateTimerLabel(countdownValue);
+                    } else if (Objects.equals(message.getMessageType(), "PERMISSION")) {
+                        if(Objects.equals(message.getChat(), username)){
+                            drawingPermission = true;
+                        }
+                        else {
+                            drawingPermission = false;
+                        }
                     } else {
                         String messageUsername = message.getUsername();
                         String finalMessage = message.getChat();
@@ -121,27 +129,33 @@ public class MainWindow extends Application implements ServerListener {
         colorPicker.setOnAction(e -> setPenColor(colorPicker.getValue()));
 
         canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
-            gc.beginPath();
-            gc.moveTo(e.getX(), e.getY());
-            gc.stroke();
+            if(drawingPermission) {
+                gc.beginPath();
+                gc.moveTo(e.getX(), e.getY());
+                gc.stroke();
 
-            sendCoordinatesToServer(e.getX(), e.getY());
+                sendCoordinatesToServer(e.getX(), e.getY());
+            }
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
-            gc.lineTo(e.getX(), e.getY());
-            gc.stroke();
+            if(drawingPermission) {
+                gc.lineTo(e.getX(), e.getY());
+                gc.stroke();
 
-            sendCoordinatesToServer(e.getX(), e.getY());
+                sendCoordinatesToServer(e.getX(), e.getY());
+            }
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
-            gc.lineTo(e.getX(), e.getY());
-            gc.stroke();
-            gc.closePath();
+            if(drawingPermission) {
+                gc.lineTo(e.getX(), e.getY());
+                gc.stroke();
+                gc.closePath();
 
-            // Send coordinates to the server
-            sendCoordinatesToServer(e.getX(), e.getY());
+                // Send coordinates to the server
+                sendCoordinatesToServer(e.getX(), e.getY());
+            }
         });
 
         timerLabel = new Label("01:00"); // Initial label text
@@ -164,14 +178,16 @@ public class MainWindow extends Application implements ServerListener {
     }
 
     private void handleClearButtonClick() {
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
-            clearCanvas();
-            Message message = new Message();
-            message.setUsername(username);
-            message.setMessageType("CLEAR_CANVAS");
-            sendMessage(message, serverSocket);
-            lastClearTime = currentTime;
+        if(drawingPermission) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
+                clearCanvas();
+                Message message = new Message();
+                message.setUsername(username);
+                message.setMessageType("CLEAR_CANVAS");
+                sendMessage(message, serverSocket);
+                lastClearTime = currentTime;
+            }
         }
     }
 

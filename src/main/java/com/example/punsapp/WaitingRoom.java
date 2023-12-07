@@ -33,10 +33,23 @@ public class WaitingRoom {
         waitingPlayersCount = 0;
     }
 
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) throws IOException {
         primaryStage.setTitle("Charades Game - Waiting room");
 
         Label textField = new Label("Waiting players: " + waitingPlayersCount + "/4");
+
+        PrintWriter out1 = new PrintWriter(serverSocket.getOutputStream(), true);
+
+        Gson gson1 = new Gson();
+
+        // Create a message object with the username and message type
+        Message clientMessage = new Message();
+        clientMessage.setMessageType("SET_USERNAME");
+        clientMessage.setUsername(username);
+
+        // Convert message object to JSON and send it to the server
+        String json1 = gson1.toJson(clientMessage);
+        out1.println(json1);
 
         Button submitButton = new Button("Start");
 //        submitButton.setOnAction(e -> {
@@ -102,9 +115,6 @@ public class WaitingRoom {
                                 throw new RuntimeException(ex);
                             }
                         });
-                    }
-                    else {
-                        System.out.println("ERROR WAITING ROOM");
                     }
                 }
             } catch (IOException e) {
