@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Objects;
 
@@ -69,8 +70,13 @@ public class WaitingRoom {
                 submitButton.setOnAction(e -> {
                     if (!username.isEmpty()) {
                         try {
-                            openMainApp(username, serverSocket);
-                            stopListening();
+                            PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+                            //openMainApp(username, serverSocket);
+                            //stopListening();
+                            Message message = new Message();
+                            message.setMessageType("START");
+                            String json = gson.toJson(message);
+                            out.println(json);
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }
@@ -87,7 +93,15 @@ public class WaitingRoom {
                         waitingPlayersCount = (int) message.getX();
                         updatePlayerCountLabel(textField);
                     } else if (Objects.equals(message.getMessageType(), "START")) {
-                        openMainApp(username, serverSocket);
+                        Platform.runLater(() -> {
+                            try {
+                                openMainApp(username, serverSocket);
+                                stopListening();
+                                primaryStage.close(); // Close the waiting room window
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        });
                     }
                     else {
                         System.out.println("ERROR WAITING ROOM");
