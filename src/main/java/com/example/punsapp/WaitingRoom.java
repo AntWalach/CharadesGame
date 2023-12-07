@@ -52,17 +52,6 @@ public class WaitingRoom {
         out1.println(json1);
 
         Button submitButton = new Button("Start");
-//        submitButton.setOnAction(e -> {
-//            if (!username.isEmpty()) {
-//                try {
-//                    openMainApp(username, serverSocket);
-//                    disconnectFromServer();
-//                } catch (IOException ex) {
-//                    throw new RuntimeException(ex);
-//                }
-//                primaryStage.close(); // Close the login window after submission
-//            }
-//        });
 
         VBox layout = new VBox(10);
         layout.getChildren().addAll(textField, submitButton);
