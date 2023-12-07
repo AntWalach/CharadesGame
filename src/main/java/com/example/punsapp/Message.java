@@ -7,6 +7,8 @@ public class Message {
     double x;
     double y;
 
+    private String color;
+
     public Message() {
         this.username = "";
         this.messageType = "";
@@ -53,5 +55,13 @@ public class Message {
 
     public void setY(double y) {
         this.y = y;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 }

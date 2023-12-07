@@ -29,7 +29,7 @@ public class WaitingRoom {
 
 
     public WaitingRoom(String username) throws IOException {
-        this.username=username;
+        this.username = username;
         waitingPlayersCount = 0;
     }
 
@@ -122,6 +122,7 @@ public class WaitingRoom {
             e.printStackTrace();
         }
     }
+
     public void stopListening() {
         isListening = false;
     }

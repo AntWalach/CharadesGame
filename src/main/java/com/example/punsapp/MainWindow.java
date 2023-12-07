@@ -18,7 +18,7 @@ import java.net.Socket;
 import java.util.Objects;
 
 
-public class MainWindow extends Application implements ServerListener {
+public class MainWindow extends Application {
 
     private String username;
     private TextArea chatArea = new TextArea();
@@ -88,12 +88,14 @@ public class MainWindow extends Application implements ServerListener {
                         int countdownValue = (int) message.getX();
                         updateTimerLabel(countdownValue);
                     } else if (Objects.equals(message.getMessageType(), "PERMISSION")) {
-                        if(Objects.equals(message.getChat(), username)){
+                        if (Objects.equals(message.getChat(), username)) {
                             drawingPermission = true;
-                        }
-                        else {
+                        } else {
                             drawingPermission = false;
                         }
+                    } else if (Objects.equals(message.getMessageType(), "COLOR_CHANGE")) {
+                        String color = message.getColor();
+                        Platform.runLater(() -> setPenColor(Color.web(color)));
                     } else {
                         String messageUsername = message.getUsername();
                         String finalMessage = message.getChat();
@@ -123,35 +125,42 @@ public class MainWindow extends Application implements ServerListener {
         clearButton.setOnAction(e -> handleClearButtonClick());
 
         ColorPicker colorPicker = new ColorPicker(Color.BLACK);
-        colorPicker.setOnAction(e -> setPenColor(colorPicker.getValue()));
+
+        colorPicker.setOnAction(e -> {
+            Color newColor = colorPicker.getValue();
+            setPenColor(newColor);
+        });
+
 
         canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
-            if(drawingPermission) {
+            if (drawingPermission) {
                 gc.beginPath();
                 gc.moveTo(e.getX(), e.getY());
+                gc.setStroke(colorPicker.getValue());  // Ustaw kolor pióra podczas naciśnięcia myszy
                 gc.stroke();
 
-                sendCoordinatesToServer(e.getX(), e.getY());
+                sendCoordinatesToServer(e.getX(), e.getY(), colorPicker.getValue());
             }
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
-            if(drawingPermission) {
+            if (drawingPermission) {
                 gc.lineTo(e.getX(), e.getY());
+                gc.setStroke(colorPicker.getValue());  // Ustaw kolor pióra podczas przesuwania myszy
                 gc.stroke();
 
-                sendCoordinatesToServer(e.getX(), e.getY());
+                sendCoordinatesToServer(e.getX(), e.getY(), colorPicker.getValue());
             }
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
-            if(drawingPermission) {
+            if (drawingPermission) {
                 gc.lineTo(e.getX(), e.getY());
                 gc.stroke();
                 gc.closePath();
 
                 // Send coordinates to the server
-                sendCoordinatesToServer(e.getX(), e.getY());
+                sendCoordinatesToServer(e.getX(), e.getY(), colorPicker.getValue());
             }
         });
 
@@ -175,7 +184,7 @@ public class MainWindow extends Application implements ServerListener {
     }
 
     private void handleClearButtonClick() {
-        if(drawingPermission) {
+        if (drawingPermission) {
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
                 clearCanvas();
@@ -196,9 +205,15 @@ public class MainWindow extends Application implements ServerListener {
         sendMessage(message, serverSocket);
     }
 
-    private void setPenColor(Color color) {
-        gc.setStroke(color);
-        gc.setFill(color);
+    private void setPenColor(Color newColor) {
+        Color currentColor = (Color) gc.getStroke();
+
+        if (!currentColor.equals(newColor)) {
+            gc.setStroke(newColor);
+            gc.setFill(newColor);
+            sendColorToServer(newColor);
+            System.out.println("Local color set: " + newColor);
+        }
     }
 
     private Pane createChatTab() {
@@ -246,28 +261,26 @@ public class MainWindow extends Application implements ServerListener {
         sendMessage(message, serverSocket);
     }
 
-    private void sendCoordinatesToServer(double x, double y) {
+    private void sendCoordinatesToServer(double x, double y, Color color) {
         Message message = new Message();
         message.setUsername(username);
         message.setMessageType("XY");
         message.setX(x);
         message.setY(y);
+        message.setColor(color.toString());
 
         sendMessage(message, serverSocket);
     }
 
-    @Override
-    public void onCoordinatesReceived(double x, double y) {
-        handleReceivedCoordinates(x, y);
+    private void sendColorToServer(Color color) {
+        Message message = new Message();
+        message.setUsername(username);
+        message.setMessageType("COLOR_CHANGE");
+        message.setColor(color.toString()); // Convert Color to String for simplicity
+
+        sendMessage(message, serverSocket);
+
     }
 
-    @Override
-    public void onClearCanvasReceived() {
-        Platform.runLater(this::clearCanvas);
-    }
 
-    @Override
-    public void onChatMessageReceived(String message) {
-        chatArea.appendText(message + "\n");
-    }
 }
