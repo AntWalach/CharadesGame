@@ -20,10 +20,12 @@ import java.util.Objects;
 
 public class WaitingRoom {
     String username;
-    double waitingPlayersCount;
+    int waitingPlayersCount;
 
     private static final int PORT = 3000;
     Socket serverSocket = new Socket("localhost", PORT);
+    private volatile boolean isListening = true; // Flag to control the listening thread
+
 
     public WaitingRoom(String username) throws IOException {
         this.username=username;
@@ -68,7 +70,7 @@ public class WaitingRoom {
                     if (!username.isEmpty()) {
                         try {
                             openMainApp(username, serverSocket);
-                            //disconnectFromServer();
+                            stopListening();
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }
@@ -76,13 +78,13 @@ public class WaitingRoom {
                     }
                 });
 
-                while ((messageServer = in.readLine()) != null) {
+                while (isListening && (messageServer = in.readLine()) != null) {
                     System.out.println("Received message from server: " + messageServer);
 
                     Message message = gson.fromJson(messageServer, Message.class);
 
                     if (Objects.equals(message.getMessageType(), "PLAYER_COUNT")) {
-                        waitingPlayersCount = message.getX();
+                        waitingPlayersCount = (int) message.getX();
                         updatePlayerCountLabel(textField);
                     } else if (Objects.equals(message.getMessageType(), "START")) {
                         openMainApp(username, serverSocket);
@@ -107,14 +109,9 @@ public class WaitingRoom {
             e.printStackTrace();
         }
     }
-
-//    private void disconnectFromServer() {
-//        try {
-//            serverSocket.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public void stopListening() {
+        isListening = false;
+    }
 
     private void updatePlayerCountLabel(Label label) {
         Platform.runLater(() -> label.setText("Waiting players: " + waitingPlayersCount + "/4"));
