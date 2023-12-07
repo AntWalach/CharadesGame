@@ -110,7 +110,6 @@ public class MainWindow extends Application implements ServerListener {
 
     private void handleReceivedCoordinates(double x, double y) {
         Platform.runLater(() -> {
-            // Draw on the canvas with the received coordinates
             gc.fillOval(x, y, 3, 3); // Draw a small circle at the received coordinates
         });
     }
