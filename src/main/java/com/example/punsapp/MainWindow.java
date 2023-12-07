@@ -25,6 +25,8 @@ public class MainWindow extends Application implements ServerListener {
     private TextField inputField = new TextField();
     private Canvas canvas;
     private GraphicsContext gc;
+    private Label timerLabel;
+    private int countdownSeconds = 60;
 
     private static final int PORT = 3000;
     //Socket serverSocket = new Socket("localhost", PORT);
@@ -54,7 +56,7 @@ public class MainWindow extends Application implements ServerListener {
         splitPane.getItems().addAll(drawingPane, chatPane);
         splitPane.setDividerPositions(0.5);
 
-        Scene scene = new Scene(splitPane, 600, 400);
+        Scene scene = new Scene(splitPane, 600, 420); //window size
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -82,6 +84,9 @@ public class MainWindow extends Application implements ServerListener {
                         Platform.runLater(() -> handleReceivedCoordinates(x, y));
                     } else if (Objects.equals(message.getMessageType(), "CLEAR_CANVAS")) {
                         Platform.runLater(this::clearCanvas);
+                    } else if (Objects.equals(message.getMessageType(), "COUNTDOWN")) {
+                        int countdownValue = (int) message.getX();
+                        updateTimerLabel(countdownValue);
                     } else {
                         String messageUsername = message.getUsername();
                         String finalMessage = message.getChat();
@@ -139,9 +144,23 @@ public class MainWindow extends Application implements ServerListener {
             sendCoordinatesToServer(e.getX(), e.getY());
         });
 
+        timerLabel = new Label("01:00"); // Initial label text
+        timerLabel.setStyle("-fx-font-size: 20;"); // Set font size
+
         VBox drawingPane = new VBox(10);
-        drawingPane.getChildren().addAll(canvas, colorPicker, clearButton);
+        drawingPane.getChildren().addAll(canvas, colorPicker, clearButton, timerLabel);
         return drawingPane;
+    }
+
+
+    private void updateTimerLabel(int countdownValue) {
+        Platform.runLater(() -> {
+            int minutes = countdownValue / 60;
+            int seconds = countdownValue % 60;
+
+            String formattedTime = String.format("%02d:%02d", minutes, seconds);
+            timerLabel.setText(formattedTime);
+        });
     }
 
     private void handleClearButtonClick() {
