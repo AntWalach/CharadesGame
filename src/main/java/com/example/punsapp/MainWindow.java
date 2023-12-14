@@ -43,7 +43,7 @@ public class MainWindow extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
 
-        primaryStage.setTitle("Charades Game");
+        primaryStage.setTitle("Charades Game - " + username);
 
         // Drawing Tab
         Pane drawingPane = createDrawingTab();
@@ -96,6 +96,8 @@ public class MainWindow extends Application {
                     } else if (Objects.equals(message.getMessageType(), "COLOR_CHANGE")) {
                         String color = message.getColor();
                         Platform.runLater(() -> setPenColor(Color.web(color)));
+                    } else if (Objects.equals(message.getMessageType(), "CLEAR_CHAT")) {
+                        Platform.runLater(() -> chatArea.clear());
                     } else {
                         String messageUsername = message.getUsername();
                         String finalMessage = message.getChat();
