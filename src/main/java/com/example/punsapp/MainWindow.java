@@ -3,6 +3,7 @@ package com.example.punsapp;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -26,6 +27,7 @@ public class MainWindow extends Application {
     private Canvas canvas;
     private GraphicsContext gc;
     private Label timerLabel;
+    private Label chatLabel;
     private int countdownSeconds = 60;
 
     private static final int PORT = 3000;
@@ -98,6 +100,12 @@ public class MainWindow extends Application {
                         Platform.runLater(() -> setPenColor(Color.web(color)));
                     } else if (Objects.equals(message.getMessageType(), "CLEAR_CHAT")) {
                         Platform.runLater(() -> chatArea.clear());
+                    } else if (Objects.equals(message.getMessageType(), "CLEAR_LEADERBOARD")) {
+                        Platform.runLater(() -> chatLabel.setText("Leaderboard"));
+                    } else if (Objects.equals(message.getMessageType(), "LEADERBOARD")) {
+                        //Platform.runLater(() -> chatLabel.setText(""));
+                        //Platform.runLater(() -> chatLabel.setText("Leaderboard"));
+                        Platform.runLater(() -> chatLabel.setText(chatLabel.getText() + "\n" + message.getUsername() + " : " + (int) message.getX()));
                     } else {
                         String messageUsername = message.getUsername();
                         String finalMessage = message.getChat();
@@ -224,7 +232,16 @@ public class MainWindow extends Application {
         // Chat Area
         chatArea.setEditable(false);
         chatArea.setWrapText(true);
-        borderPane.setCenter(chatArea);
+        VBox chatVBox = new VBox(chatArea);
+        chatVBox.setPadding(new Insets(10));
+        VBox.setVgrow(chatArea, Priority.ALWAYS);
+
+        // Label on the chat side
+        chatLabel = new Label("Leaderboard");
+        chatLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        VBox labelVBox = new VBox(chatLabel);
+        labelVBox.setAlignment(Pos.CENTER);
+        labelVBox.setPadding(new Insets(10));
 
         // Input Field and Send Button
         inputField.setPromptText("Type your message...");
@@ -232,10 +249,17 @@ public class MainWindow extends Application {
         Button sendButton = new Button("Send");
         sendButton.setOnAction(e -> sendChat(inputField.getText()));
 
+        VBox chatAndLabelVBox = new VBox();
+        chatAndLabelVBox.getChildren().addAll(labelVBox, chatVBox);
+
         VBox inputContainer = new VBox(10);
         inputContainer.setPadding(new Insets(10));
         inputContainer.getChildren().addAll(inputField, sendButton);
-        borderPane.setBottom(inputContainer);
+
+        VBox finalChatVBox = new VBox();
+        finalChatVBox.getChildren().addAll(chatAndLabelVBox, inputContainer);
+
+        borderPane.setCenter(finalChatVBox);
 
         return borderPane;
     }
