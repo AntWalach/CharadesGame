@@ -19,6 +19,7 @@ import java.util.Objects;
 
 public class Waiting extends Application {
     String username;
+    int roomId = 0;
     int waitingPlayersCount;
     private static final int PORT = 3000;
     Socket serverSocket = new Socket("localhost", PORT);
@@ -75,7 +76,7 @@ public class Waiting extends Application {
 
                     if (Objects.equals(message.getMessageType(), "CREATE_ROOM")) {
                         Platform.runLater(() -> {
-                            VBox newLabel = createPlayerLabel();
+                            VBox newLabel = createPlayerLabel((int) message.getX());
                             layout.getChildren().add(newLabel);
                         });
                     } else if (Objects.equals(message.getMessageType(), "START")) {
@@ -98,29 +99,48 @@ public class Waiting extends Application {
         threadListener.start();
     }
 
-//        createButton.setOnAction(event -> {
-//            VBox newLabel = createPlayerLabel();
-//            layout.getChildren().add(newLabel);
-//
-//
-//        });
-
-    private VBox createPlayerLabel() {
+    private VBox createPlayerLabel(int componentId) {
         Label label = new Label("Player " + (playerLabels.size() + 1));
         Button joinButton = new Button("Join");
         Button startButton = new Button("Start");
 
+        joinButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Join"
+        startButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Start"
+
         VBox labelLayout = new VBox(5, label, joinButton, startButton);
         labelLayout.setPadding(new Insets(10));
         labelLayout.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
+
         joinButton.setOnAction(event -> {
             // Action on join button click
             // Implement the join action here
+            Button clickedButton = (Button) event.getSource();
+            String buttonId = clickedButton.getId();
+            int index = Integer.parseInt(buttonId);
+
+            roomId = index;
+
+            try {
+                PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+                Message message = new Message();
+                message.setMessageType("JOIN_ROOM");
+                message.setRoomId(index);
+                message.setUsername(username);
+                String json = new Gson().toJson(message, Message.class);
+                out.println(json);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         startButton.setOnAction(event -> {
             // Action on start button click
             // Implement the start action here
+            Button clickedButton = (Button) event.getSource();
+            String buttonId = clickedButton.getId();
+            int index = Integer.parseInt(buttonId);
+            // Tu możesz wykonać działania na przycisku "Start" z identyfikatorem "index"
+            System.out.println("start " + index);
         });
 
         playerLabels.add(label);

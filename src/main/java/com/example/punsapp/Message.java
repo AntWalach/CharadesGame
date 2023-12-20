@@ -1,6 +1,7 @@
 package com.example.punsapp;
 
 public class Message {
+    int roomId;
     String username;
     String messageType;
     String chat;
@@ -10,6 +11,7 @@ public class Message {
     private String color;
 
     public Message() {
+        this.roomId = -1;
         this.username = "";
         this.messageType = "";
         this.chat = "";
@@ -63,5 +65,13 @@ public class Message {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public int getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(int roomId) {
+        this.roomId = roomId;
     }
 }
