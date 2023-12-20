@@ -49,8 +49,9 @@ public class Main extends Application {
     }
 
     private void openMainApp(String username) throws IOException {
-        //MainWindow mainApp = new MainWindow(username);
-        WaitingRoom waitingRoom = new WaitingRoom(username);
-        waitingRoom.start(new Stage());
+        //WaitingRoom waitingRoom = new WaitingRoom(username);
+        //waitingRoom.start(new Stage());
+        Waiting waiting = new Waiting(username);
+        waiting.start(new Stage());
     }
 }
