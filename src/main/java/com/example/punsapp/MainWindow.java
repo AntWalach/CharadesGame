@@ -32,14 +32,16 @@ public class MainWindow extends Application {
 
     private static final int PORT = 3000;
     Socket serverSocket;
+    private final int roomId;
 
     private long lastClearTime = 0;
     private static final long CLEAR_COOLDOWN = 1000; // Cooldown time in milliseconds
     private boolean drawingPermission = false;
 
-    public MainWindow(String username, Socket serverSocket) throws IOException {
+    public MainWindow(String username, Socket serverSocket, int roomId) throws IOException {
         this.username = username;
         this.serverSocket = serverSocket;
+        this.roomId = roomId;
     }
 
     @Override
@@ -79,37 +81,37 @@ public class MainWindow extends Application {
 
                     Message message = gson.fromJson(messageServer, Message.class);
 
-                    if (Objects.equals(message.getMessageType(), "XY")) {
-                        double x = message.getX();
-                        double y = message.getY();
+                    if(Objects.equals(message.getRoomId(), roomId)) {
+                        if (Objects.equals(message.getMessageType(), "XY")) {
+                            double x = message.getX();
+                            double y = message.getY();
 
-                        Platform.runLater(() -> handleReceivedCoordinates(x, y));
-                    } else if (Objects.equals(message.getMessageType(), "CLEAR_CANVAS")) {
-                        Platform.runLater(this::clearCanvas);
-                    } else if (Objects.equals(message.getMessageType(), "COUNTDOWN")) {
-                        int countdownValue = (int) message.getX();
-                        updateTimerLabel(countdownValue);
-                    } else if (Objects.equals(message.getMessageType(), "PERMISSION")) {
-                        if (Objects.equals(message.getChat(), username)) {
-                            drawingPermission = true;
+                            Platform.runLater(() -> handleReceivedCoordinates(x, y));
+                        } else if (Objects.equals(message.getMessageType(), "CLEAR_CANVAS")) {
+                            Platform.runLater(this::clearCanvas);
+                        } else if (Objects.equals(message.getMessageType(), "COUNTDOWN")) {
+                            int countdownValue = (int) message.getX();
+                            updateTimerLabel(countdownValue);
+                        } else if (Objects.equals(message.getMessageType(), "PERMISSION")) {
+                            if (Objects.equals(message.getChat(), username)) {
+                                drawingPermission = true;
+                            } else {
+                                drawingPermission = false;
+                            }
+                        } else if (Objects.equals(message.getMessageType(), "COLOR_CHANGE")) {
+                            String color = message.getColor();
+                            Platform.runLater(() -> setPenColor(Color.web(color)));
+                        } else if (Objects.equals(message.getMessageType(), "CLEAR_CHAT")) {
+                            Platform.runLater(() -> chatArea.clear());
+                        } else if (Objects.equals(message.getMessageType(), "CLEAR_LEADERBOARD")) {
+                            Platform.runLater(() -> chatLabel.setText("Leaderboard"));
+                        } else if (Objects.equals(message.getMessageType(), "LEADERBOARD")) {
+                            Platform.runLater(() -> chatLabel.setText(chatLabel.getText() + "\n" + message.getUsername() + " : " + (int) message.getX()));
                         } else {
-                            drawingPermission = false;
+                            String messageUsername = message.getUsername();
+                            String finalMessage = message.getChat();
+                            Platform.runLater(() -> chatArea.appendText(messageUsername + ": " + finalMessage + "\n"));
                         }
-                    } else if (Objects.equals(message.getMessageType(), "COLOR_CHANGE")) {
-                        String color = message.getColor();
-                        Platform.runLater(() -> setPenColor(Color.web(color)));
-                    } else if (Objects.equals(message.getMessageType(), "CLEAR_CHAT")) {
-                        Platform.runLater(() -> chatArea.clear());
-                    } else if (Objects.equals(message.getMessageType(), "CLEAR_LEADERBOARD")) {
-                        Platform.runLater(() -> chatLabel.setText("Leaderboard"));
-                    } else if (Objects.equals(message.getMessageType(), "LEADERBOARD")) {
-                        //Platform.runLater(() -> chatLabel.setText(""));
-                        //Platform.runLater(() -> chatLabel.setText("Leaderboard"));
-                        Platform.runLater(() -> chatLabel.setText(chatLabel.getText() + "\n" + message.getUsername() + " : " + (int) message.getX()));
-                    } else {
-                        String messageUsername = message.getUsername();
-                        String finalMessage = message.getChat();
-                        Platform.runLater(() -> chatArea.appendText(messageUsername + ": " + finalMessage + "\n"));
                     }
                 }
             } catch (IOException e) {
@@ -199,6 +201,7 @@ public class MainWindow extends Application {
             if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
                 clearCanvas();
                 Message message = new Message();
+                message.setRoomId(roomId);
                 message.setUsername(username);
                 message.setMessageType("CLEAR_CANVAS");
                 sendMessage(message, serverSocket);
@@ -210,6 +213,7 @@ public class MainWindow extends Application {
     private void clearCanvas() {
         gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
         Message message = new Message();
+        message.setRoomId(roomId);
         message.setUsername(username);
         message.setMessageType("CLEAR_CANVAS");
         sendMessage(message, serverSocket);
@@ -280,6 +284,7 @@ public class MainWindow extends Application {
 
     private void sendChat(String chat) {
         Message message = new Message();
+        message.setRoomId(roomId);
         message.setUsername(username);
         message.setMessageType("CHAT");
         message.setChat(chat);
@@ -289,6 +294,7 @@ public class MainWindow extends Application {
 
     private void sendCoordinatesToServer(double x, double y, Color color) {
         Message message = new Message();
+        message.setRoomId(roomId);
         message.setUsername(username);
         message.setMessageType("XY");
         message.setX(x);
@@ -300,6 +306,7 @@ public class MainWindow extends Application {
 
     private void sendColorToServer(Color color) {
         Message message = new Message();
+        message.setRoomId(roomId);
         message.setUsername(username);
         message.setMessageType("COLOR_CHANGE");
         message.setColor(color.toString()); // Convert Color to String for simplicity

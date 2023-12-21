@@ -56,8 +56,6 @@ public class Waiting extends Application {
                     if (!username.isEmpty()) {
                         try {
                             PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
-                            //openMainApp(username, serverSocket);
-                            //stopListening();
                             Message message = new Message();
                             message.setMessageType("CREATE_ROOM");
                             String json = gson.toJson(message);
@@ -79,16 +77,30 @@ public class Waiting extends Application {
                             VBox newLabel = createPlayerLabel((int) message.getX());
                             layout.getChildren().add(newLabel);
                         });
-                    } else if (Objects.equals(message.getMessageType(), "START")) {
+                    } else if (Objects.equals(message.getMessageType(), "PLAYERS_COUNT_UPDATE")) {
                         Platform.runLater(() -> {
-                            try {
-                                openMainApp(username, serverSocket);
-                                stopListening();
-                                primaryStage.close(); // Close the waiting room window
-                            } catch (IOException ex) {
-                                throw new RuntimeException(ex);
+                            int roomIdToUpdate = (int) message.getX();
+                            int updatedPlayerCount = (int) message.getY();
+
+                            for (Label label : playerLabels) {
+                                if (Integer.parseInt(label.getId()) == roomIdToUpdate) {
+                                    label.setText("Room " + roomIdToUpdate + " - " + updatedPlayerCount + "/4");
+                                    break; // Znaleziono etykietę dla danego pokoju, aktualizacja zakończona
+                                }
                             }
                         });
+                    } else if (Objects.equals(message.getMessageType(), "START")) {
+                        if(Objects.equals(message.getRoomId(), roomId)) {
+                            Platform.runLater(() -> {
+                                try {
+                                    openMainApp(username, serverSocket, roomId);
+                                    stopListening();
+                                    primaryStage.close(); // Close the waiting room window
+                                } catch (IOException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+                            });
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -100,10 +112,11 @@ public class Waiting extends Application {
     }
 
     private VBox createPlayerLabel(int componentId) {
-        Label label = new Label("Player " + (playerLabels.size() + 1));
+        Label label = new Label("Room " + componentId + " - " + "0/4");
         Button joinButton = new Button("Join");
         Button startButton = new Button("Start");
 
+        label.setId(String.valueOf(componentId));
         joinButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Join"
         startButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Start"
 
@@ -141,6 +154,21 @@ public class Waiting extends Application {
             int index = Integer.parseInt(buttonId);
             // Tu możesz wykonać działania na przycisku "Start" z identyfikatorem "index"
             System.out.println("start " + index);
+
+            if (!username.isEmpty()) {
+                try {
+                    PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+                    Message message = new Message();
+                    message.setMessageType("START");
+                    message.setRoomId(index);
+                    message.setUsername(username);
+                    String json = new Gson().toJson(message, Message.class);
+                    out.println(json);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+                //primaryStage.close(); // Close the login window after submission
+            }
         });
 
         playerLabels.add(label);
@@ -151,8 +179,8 @@ public class Waiting extends Application {
         launch(args);
     }
 
-    private void openMainApp(String username, Socket serverSocket) throws IOException {
-        MainWindow mainApp = new MainWindow(username, serverSocket);
+    private void openMainApp(String username, Socket serverSocket, int roomId) throws IOException {
+        MainWindow mainApp = new MainWindow(username, serverSocket, roomId);
         try {
             mainApp.start(new Stage());
         } catch (IOException e) {
