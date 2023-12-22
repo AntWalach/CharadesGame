@@ -38,10 +38,10 @@ public class MainWindow extends Application {
     private static final long CLEAR_COOLDOWN = 1000; // Cooldown time in milliseconds
     private boolean drawingPermission = false;
 
-    public MainWindow(String username, Socket serverSocket, int roomId) throws IOException {
+    public MainWindow(String username, int roomId) throws IOException {
         this.username = username;
-        this.serverSocket = serverSocket;
         this.roomId = roomId;
+        serverSocket = new Socket("localhost", 3000 + roomId);
     }
 
     @Override

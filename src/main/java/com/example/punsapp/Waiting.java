@@ -34,6 +34,13 @@ public class Waiting extends Application {
     public void start(Stage primaryStage) throws IOException {
         primaryStage.setTitle("Charades Game - Waiting room");
 
+        PrintWriter out1 = new PrintWriter(serverSocket.getOutputStream(), true);
+        Message clientMessage = new Message();
+        clientMessage.setMessageType("SET_USERNAME");
+        clientMessage.setUsername(username);
+        String json1 = new Gson().toJson(clientMessage);
+        out1.println(json1);
+
         VBox layout = new VBox(10);
         layout.setAlignment(Pos.TOP_RIGHT);
         layout.setPadding(new Insets(20));
@@ -58,6 +65,7 @@ public class Waiting extends Application {
                             PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
                             Message message = new Message();
                             message.setMessageType("CREATE_ROOM");
+                            message.setUsername(username);
                             String json = gson.toJson(message);
                             out.println(json);
                         } catch (IOException ex) {
@@ -90,10 +98,18 @@ public class Waiting extends Application {
                             }
                         });
                     } else if (Objects.equals(message.getMessageType(), "START")) {
+
+//                        PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+//                        Message message1 = new Message();
+//                        message1.setMessageType("START_NEW_ROOM");
+//                        message1.setUsername(username);
+//                        String json = gson.toJson(message1);
+//                        out.println(json);
+
                         if(Objects.equals(message.getRoomId(), roomId)) {
                             Platform.runLater(() -> {
                                 try {
-                                    openMainApp(username, serverSocket, roomId);
+                                    openMainApp(username, roomId);
                                     stopListening();
                                     primaryStage.close(); // Close the waiting room window
                                 } catch (IOException ex) {
@@ -153,9 +169,9 @@ public class Waiting extends Application {
             String buttonId = clickedButton.getId();
             int index = Integer.parseInt(buttonId);
             // Tu możesz wykonać działania na przycisku "Start" z identyfikatorem "index"
-            System.out.println("start " + index);
+            System.out.println("start przycisk " + index);
 
-            if (!username.isEmpty()) {
+
                 try {
                     PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
                     Message message = new Message();
@@ -168,7 +184,7 @@ public class Waiting extends Application {
                     throw new RuntimeException(ex);
                 }
                 //primaryStage.close(); // Close the login window after submission
-            }
+
         });
 
         playerLabels.add(label);
@@ -179,8 +195,8 @@ public class Waiting extends Application {
         launch(args);
     }
 
-    private void openMainApp(String username, Socket serverSocket, int roomId) throws IOException {
-        MainWindow mainApp = new MainWindow(username, serverSocket, roomId);
+    private void openMainApp(String username, int roomId) throws IOException {
+        MainWindow mainApp = new MainWindow(username, roomId);
         try {
             mainApp.start(new Stage());
         } catch (IOException e) {
