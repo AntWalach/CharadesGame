@@ -34,12 +34,12 @@ public class Waiting extends Application {
     public void start(Stage primaryStage) throws IOException {
         primaryStage.setTitle("Charades Game - Waiting room");
 
-        PrintWriter out1 = new PrintWriter(serverSocket.getOutputStream(), true);
-        Message clientMessage = new Message();
-        clientMessage.setMessageType("SET_USERNAME");
-        clientMessage.setUsername(username);
-        String json1 = new Gson().toJson(clientMessage);
-        out1.println(json1);
+//        PrintWriter out1 = new PrintWriter(serverSocket.getOutputStream(), true);
+//        Message clientMessage = new Message();
+//        clientMessage.setMessageType("SET_USERNAME");
+//        clientMessage.setUsername(username);
+//        String json1 = new Gson().toJson(clientMessage);
+//        out1.println(json1);
 
         VBox layout = new VBox(10);
         layout.setAlignment(Pos.TOP_RIGHT);

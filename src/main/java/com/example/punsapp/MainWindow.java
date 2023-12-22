@@ -47,6 +47,13 @@ public class MainWindow extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
 
+        PrintWriter out1 = new PrintWriter(serverSocket.getOutputStream(), true);
+        Message clientMessage = new Message();
+        clientMessage.setMessageType("SET_USERNAME");
+        clientMessage.setUsername(username);
+        String json1 = new Gson().toJson(clientMessage);
+        out1.println(json1);
+
         primaryStage.setTitle("Charades Game - " + username);
 
         // Drawing Tab
