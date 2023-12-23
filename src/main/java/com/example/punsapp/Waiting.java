@@ -8,6 +8,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -41,14 +43,22 @@ public class Waiting extends Application {
 //        String json1 = new Gson().toJson(clientMessage);
 //        out1.println(json1);
 
+        ScrollPane scrollPane = new ScrollPane();
         VBox layout = new VBox(10);
+        scrollPane.setContent(layout);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background-color: transparent;");
+
         layout.setAlignment(Pos.TOP_RIGHT);
         layout.setPadding(new Insets(20));
+        layout.setStyle("-fx-background-color: #F2F1EB");
 
         Button createButton = new Button("Create");
+        createButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
         layout.getChildren().add(createButton);
 
-        Scene scene = new Scene(layout, 400, 300);
+        Scene scene = new Scene(scrollPane, 600, 450);
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -129,8 +139,12 @@ public class Waiting extends Application {
 
     private VBox createPlayerLabel(int componentId) {
         Label label = new Label("Room " + componentId + " - " + "0/4");
+
         Button joinButton = new Button("Join");
         Button startButton = new Button("Start");
+
+        joinButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
+        startButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
 
         label.setId(String.valueOf(componentId));
         joinButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Join"
@@ -138,7 +152,7 @@ public class Waiting extends Application {
 
         VBox labelLayout = new VBox(5, label, joinButton, startButton);
         labelLayout.setPadding(new Insets(10));
-        labelLayout.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
+        labelLayout.setStyle("-fx-background-color: #AFC8AD");
 
         joinButton.setOnAction(event -> {
             // Action on join button click

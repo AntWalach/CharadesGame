@@ -24,8 +24,10 @@ public class Main extends Application {
 
         TextField usernameField = new TextField();
         usernameField.setPromptText("Enter username");
+        usernameField.setStyle("-fx-font-size: 14px; -fx-background-color: #FFFFFF; -fx-border-color: #88AB8E; -fx-prompt-text-fill: #A9A9A9;");
 
         Button submitButton = new Button("Submit");
+        submitButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
         submitButton.setOnAction(e -> {
             String username = usernameField.getText();
             if (!username.isEmpty()) {
@@ -42,6 +44,7 @@ public class Main extends Application {
         layout.getChildren().addAll(usernameField, submitButton);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(20));
+        layout.setStyle("-fx-background-color: #F2F1EB");
 
         Scene scene = new Scene(layout, 300, 200);
         primaryStage.setScene(scene);
