@@ -28,6 +28,8 @@ public class MainWindow extends Application {
     private GraphicsContext gc;
     private Label timerLabel;
     private Label chatLabel;
+    private Label turnLabel;
+    private Label wordLabel;
     private int countdownSeconds = 60;
 
     private static final int PORT = 3000;
@@ -64,10 +66,11 @@ public class MainWindow extends Application {
 
         // SplitPane to divide the window into two halves
         SplitPane splitPane = new SplitPane();
+        splitPane.setStyle("-fx-background-color: #AFC8AD");
         splitPane.getItems().addAll(drawingPane, chatPane);
         splitPane.setDividerPositions(0.5);
 
-        Scene scene = new Scene(splitPane, 600, 420); //window size
+        Scene scene = new Scene(splitPane, 800, 580); //window size
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -114,6 +117,12 @@ public class MainWindow extends Application {
                             Platform.runLater(() -> chatLabel.setText("Leaderboard"));
                         } else if (Objects.equals(message.getMessageType(), "LEADERBOARD")) {
                             Platform.runLater(() -> chatLabel.setText(chatLabel.getText() + "\n" + message.getUsername() + " : " + (int) message.getX()));
+                        } else if (Objects.equals(message.getMessageType(), "TURN_INFO")) {
+                            Platform.runLater(() -> turnLabel.setText("Turn to draw: " + message.getChat()));
+                        } else if (Objects.equals(message.getMessageType(), "WORD_INFO")) {
+                            Platform.runLater(() -> wordLabel.setText("Word: " + message.getChat()));
+                        } else if (Objects.equals(message.getMessageType(), "CLEAR_WORD_LABEL")) {
+                            Platform.runLater(() -> wordLabel.setText(""));
                         } else {
                             String messageUsername = message.getUsername();
                             String finalMessage = message.getChat();
@@ -136,7 +145,7 @@ public class MainWindow extends Application {
     }
 
     private Pane createDrawingTab() {
-        canvas = new Canvas(400, 300);
+        canvas = new Canvas(600, 400);
         gc = canvas.getGraphicsContext2D();
         gc.setLineWidth(2.0);
 
@@ -184,13 +193,32 @@ public class MainWindow extends Application {
         });
 
         timerLabel = new Label("01:00"); // Initial label text
-        timerLabel.setStyle("-fx-font-size: 20;"); // Set font size
+        timerLabel.setStyle("-fx-font-size: 25px; -fx-control-inner-background: #FFFFFF;");
+
+        turnLabel = new Label("Turn to draw: ");
+        turnLabel.setStyle("-fx-font-size: 20px; -fx-control-inner-background: #FFFFFF; -fx-font-weight: bold;");
+
+        wordLabel = new Label();
+        wordLabel.setStyle("-fx-font-size: 20px; -fx-control-inner-background: #FFFFFF; -fx-font-weight: bold;");
+
+        turnLabel.setMinWidth(Label.USE_PREF_SIZE);
+        wordLabel.setMinWidth(Label.USE_PREF_SIZE);
+
+        HBox labelBox = new HBox(30);
+        labelBox.getChildren().addAll(turnLabel, wordLabel);
+
+        // Enhance button styling
+        clearButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
+
+        // Adjust drawing canvas styling
+
+
 
         VBox drawingPane = new VBox(10);
-        drawingPane.getChildren().addAll(canvas, colorPicker, clearButton, timerLabel);
+        drawingPane.setStyle("-fx-background-color: #F2F1EB;"); // Set background color for the VBox containing the Canvas
+        drawingPane.getChildren().addAll(labelBox, canvas, colorPicker, clearButton, timerLabel);
         return drawingPane;
     }
-
 
     private void updateTimerLabel(int countdownValue) {
         Platform.runLater(() -> {
@@ -245,7 +273,7 @@ public class MainWindow extends Application {
         chatArea.setWrapText(true);
         VBox chatVBox = new VBox(chatArea);
         chatVBox.setPadding(new Insets(10));
-        VBox.setVgrow(chatArea, Priority.ALWAYS);
+        VBox.setVgrow(chatArea, Priority.NEVER); // Allow chatArea to grow
 
         // Label on the chat side
         chatLabel = new Label("Leaderboard");
@@ -253,6 +281,7 @@ public class MainWindow extends Application {
         VBox labelVBox = new VBox(chatLabel);
         labelVBox.setAlignment(Pos.CENTER);
         labelVBox.setPadding(new Insets(10));
+        VBox.setVgrow(chatLabel, Priority.ALWAYS);
 
         // Input Field and Send Button
         inputField.setPromptText("Type your message...");
@@ -260,20 +289,35 @@ public class MainWindow extends Application {
         Button sendButton = new Button("Send");
         sendButton.setOnAction(e -> sendChat(inputField.getText()));
 
+        sendButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px; ");
+
+        // Improve chat area appearance
+        chatArea.setStyle("-fx-font-size: 14px; -fx-background-color: #FFFFFF; -fx-control-inner-background: #FFFFFF;");
+
+        // Enhance input field and button styling
+        inputField.setStyle("-fx-font-size: 14px; -fx-background-color: #FFFFFF; -fx-prompt-text-fill: #A9A9A9;");
+
         VBox chatAndLabelVBox = new VBox();
-        chatAndLabelVBox.getChildren().addAll(labelVBox, chatVBox);
+        chatAndLabelVBox.getChildren().addAll(labelVBox);
 
         VBox inputContainer = new VBox(10);
         inputContainer.setPadding(new Insets(10));
-        inputContainer.getChildren().addAll(inputField, sendButton);
+        inputContainer.getChildren().addAll(chatArea, inputField, sendButton);
 
         VBox finalChatVBox = new VBox();
-        finalChatVBox.getChildren().addAll(chatAndLabelVBox, inputContainer);
+        finalChatVBox.getChildren().addAll(chatAndLabelVBox); // Reversed order: label/chat above chatArea
 
-        borderPane.setCenter(finalChatVBox);
+        borderPane.setTop(finalChatVBox);
+        borderPane.setBottom(inputContainer); // Place inputContainer at the bottom
+
+        // Align chatVBox and inputContainer to the bottom of the BorderPane
+        BorderPane.setAlignment(chatVBox, Pos.BOTTOM_CENTER);
+        BorderPane.setAlignment(inputContainer, Pos.BOTTOM_CENTER);
 
         return borderPane;
     }
+
+
 
     private void sendMessage(Message message, Socket serverSocket) {
         try {
@@ -319,8 +363,5 @@ public class MainWindow extends Application {
         message.setColor(color.toString()); // Convert Color to String for simplicity
 
         sendMessage(message, serverSocket);
-
     }
-
-
 }
