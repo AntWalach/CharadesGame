@@ -9,7 +9,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -35,13 +34,6 @@ public class Waiting extends Application {
 
     public void start(Stage primaryStage) throws IOException {
         primaryStage.setTitle("Charades Game - Waiting room");
-
-//        PrintWriter out1 = new PrintWriter(serverSocket.getOutputStream(), true);
-//        Message clientMessage = new Message();
-//        clientMessage.setMessageType("SET_USERNAME");
-//        clientMessage.setUsername(username);
-//        String json1 = new Gson().toJson(clientMessage);
-//        out1.println(json1);
 
         ScrollPane scrollPane = new ScrollPane();
         VBox layout = new VBox(10);
@@ -81,7 +73,6 @@ public class Waiting extends Application {
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }
-                        //primaryStage.close(); // Close the login window after submission
                     }
                 });
 
@@ -108,14 +99,6 @@ public class Waiting extends Application {
                             }
                         });
                     } else if (Objects.equals(message.getMessageType(), "START")) {
-
-//                        PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
-//                        Message message1 = new Message();
-//                        message1.setMessageType("START_NEW_ROOM");
-//                        message1.setUsername(username);
-//                        String json = gson.toJson(message1);
-//                        out.println(json);
-
                         if(Objects.equals(message.getRoomId(), roomId)) {
                             Platform.runLater(() -> {
                                 try {
@@ -155,8 +138,6 @@ public class Waiting extends Application {
         labelLayout.setStyle("-fx-background-color: #AFC8AD");
 
         joinButton.setOnAction(event -> {
-            // Action on join button click
-            // Implement the join action here
             Button clickedButton = (Button) event.getSource();
             String buttonId = clickedButton.getId();
             int index = Integer.parseInt(buttonId);
@@ -177,8 +158,6 @@ public class Waiting extends Application {
         });
 
         startButton.setOnAction(event -> {
-            // Action on start button click
-            // Implement the start action here
             Button clickedButton = (Button) event.getSource();
             String buttonId = clickedButton.getId();
             int index = Integer.parseInt(buttonId);
@@ -197,8 +176,6 @@ public class Waiting extends Application {
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
-                //primaryStage.close(); // Close the login window after submission
-
         });
 
         playerLabels.add(label);

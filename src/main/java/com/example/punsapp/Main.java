@@ -11,8 +11,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-import static javafx.application.Application.launch;
-
 public class Main extends Application {
     public static void main(String[] args) {
         launch(args);
@@ -52,8 +50,6 @@ public class Main extends Application {
     }
 
     private void openMainApp(String username) throws IOException {
-        //WaitingRoom waitingRoom = new WaitingRoom(username);
-        //waitingRoom.start(new Stage());
         Waiting waiting = new Waiting(username);
         waiting.start(new Stage());
     }

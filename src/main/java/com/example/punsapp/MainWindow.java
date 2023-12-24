@@ -30,9 +30,7 @@ public class MainWindow extends Application {
     private Label chatLabel;
     private Label turnLabel;
     private Label wordLabel;
-    private int countdownSeconds = 60;
 
-    private static final int PORT = 3000;
     Socket serverSocket;
     private final int roomId;
 
@@ -164,7 +162,7 @@ public class MainWindow extends Application {
             if (drawingPermission) {
                 gc.beginPath();
                 gc.moveTo(e.getX(), e.getY());
-                gc.setStroke(colorPicker.getValue());  // Ustaw kolor pióra podczas naciśnięcia myszy
+                gc.setStroke(colorPicker.getValue());
                 gc.stroke();
 
                 sendCoordinatesToServer(e.getX(), e.getY(), colorPicker.getValue());
@@ -174,7 +172,7 @@ public class MainWindow extends Application {
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
             if (drawingPermission) {
                 gc.lineTo(e.getX(), e.getY());
-                gc.setStroke(colorPicker.getValue());  // Ustaw kolor pióra podczas przesuwania myszy
+                gc.setStroke(colorPicker.getValue());
                 gc.stroke();
 
                 sendCoordinatesToServer(e.getX(), e.getY(), colorPicker.getValue());
@@ -207,12 +205,7 @@ public class MainWindow extends Application {
         HBox labelBox = new HBox(30);
         labelBox.getChildren().addAll(turnLabel, wordLabel);
 
-        // Enhance button styling
         clearButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
-
-        // Adjust drawing canvas styling
-
-
 
         VBox drawingPane = new VBox(10);
         drawingPane.setStyle("-fx-background-color: #F2F1EB;"); // Set background color for the VBox containing the Canvas
@@ -290,11 +283,7 @@ public class MainWindow extends Application {
         sendButton.setOnAction(e -> sendChat(inputField.getText()));
 
         sendButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px; ");
-
-        // Improve chat area appearance
         chatArea.setStyle("-fx-font-size: 14px; -fx-background-color: #FFFFFF; -fx-control-inner-background: #FFFFFF;");
-
-        // Enhance input field and button styling
         inputField.setStyle("-fx-font-size: 14px; -fx-background-color: #FFFFFF; -fx-prompt-text-fill: #A9A9A9;");
 
         VBox chatAndLabelVBox = new VBox();
