@@ -90,41 +90,48 @@ public class MainWindow extends Application {
                     Message message = gson.fromJson(messageServer, Message.class);
 
                     if(Objects.equals(message.getRoomId(), roomId)) {
-                        if (Objects.equals(message.getMessageType(), "XY")) {
-                            double x = message.getX();
-                            double y = message.getY();
-
-                            Platform.runLater(() -> handleReceivedCoordinates(x, y));
-                        } else if (Objects.equals(message.getMessageType(), "CLEAR_CANVAS")) {
-                            Platform.runLater(this::clearCanvas);
-                        } else if (Objects.equals(message.getMessageType(), "COUNTDOWN")) {
-                            int countdownValue = (int) message.getX();
-                            updateTimerLabel(countdownValue);
-                        } else if (Objects.equals(message.getMessageType(), "PERMISSION")) {
-                            if (Objects.equals(message.getChat(), username)) {
-                                drawingPermission = true;
-                            } else {
-                                drawingPermission = false;
-                            }
-                        } else if (Objects.equals(message.getMessageType(), "COLOR_CHANGE")) {
-                            String color = message.getColor();
-                            Platform.runLater(() -> setPenColor(Color.web(color)));
-                        } else if (Objects.equals(message.getMessageType(), "CLEAR_CHAT")) {
-                            Platform.runLater(() -> chatArea.clear());
-                        } else if (Objects.equals(message.getMessageType(), "CLEAR_LEADERBOARD")) {
-                            Platform.runLater(() -> chatLabel.setText("Leaderboard"));
-                        } else if (Objects.equals(message.getMessageType(), "LEADERBOARD")) {
-                            Platform.runLater(() -> chatLabel.setText(chatLabel.getText() + "\n" + message.getUsername() + " : " + (int) message.getX()));
-                        } else if (Objects.equals(message.getMessageType(), "TURN_INFO")) {
-                            Platform.runLater(() -> turnLabel.setText("Turn to draw: " + message.getChat()));
-                        } else if (Objects.equals(message.getMessageType(), "WORD_INFO")) {
-                            Platform.runLater(() -> wordLabel.setText("Word: " + message.getChat()));
-                        } else if (Objects.equals(message.getMessageType(), "CLEAR_WORD_LABEL")) {
-                            Platform.runLater(() -> wordLabel.setText(""));
-                        } else {
-                            String messageUsername = message.getUsername();
-                            String finalMessage = message.getChat();
-                            Platform.runLater(() -> chatArea.appendText(messageUsername + ": " + finalMessage + "\n"));
+                        switch (message.getMessageType()) {
+                            case "XY":
+                                double x = message.getX();
+                                double y = message.getY();
+                                Platform.runLater(() -> handleReceivedCoordinates(x, y));
+                                break;
+                            case "CLEAR_CANVAS":
+                                Platform.runLater(this::clearCanvas);
+                                break;
+                            case "COUNTDOWN":
+                                int countdownValue = (int) message.getX();
+                                Platform.runLater(() -> updateTimerLabel(countdownValue));
+                                break;
+                            case "PERMISSION":
+                                drawingPermission = Objects.equals(message.getChat(), username);
+                                break;
+                            case "COLOR_CHANGE":
+                                String color = message.getColor();
+                                Platform.runLater(() -> setPenColor(Color.web(color)));
+                                break;
+                            case "CLEAR_CHAT":
+                                Platform.runLater(() -> chatArea.clear());
+                                break;
+                            case "CLEAR_LEADERBOARD":
+                                Platform.runLater(() -> chatLabel.setText("Leaderboard"));
+                                break;
+                            case "LEADERBOARD":
+                                Platform.runLater(() -> chatLabel.setText(chatLabel.getText() + "\n" + message.getUsername() + " : " + (int) message.getX()));
+                                break;
+                            case "TURN_INFO":
+                                Platform.runLater(() -> turnLabel.setText("Turn to draw: " + message.getChat()));
+                                break;
+                            case "WORD_INFO":
+                                Platform.runLater(() -> wordLabel.setText("Word: " + message.getChat()));
+                                break;
+                            case "CLEAR_WORD_LABEL":
+                                Platform.runLater(() -> wordLabel.setText(""));
+                                break;
+                            default:
+                                String messageUsername = message.getUsername();
+                                String finalMessage = message.getChat();
+                                Platform.runLater(() -> chatArea.appendText(messageUsername + ": " + finalMessage + "\n"));
                         }
                     }
                 }

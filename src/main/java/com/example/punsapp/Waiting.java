@@ -83,18 +83,18 @@ public class Waiting extends Application {
 
                     if (Objects.equals(message.getMessageType(), "CREATE_ROOM")) {
                         Platform.runLater(() -> {
-                            VBox newLabel = createPlayerLabel((int) message.getX());
+                            VBox newLabel = createPlayerLabel((int) message.getX(), 0);
                             layout.getChildren().add(newLabel);
                         });
                     } else if (Objects.equals(message.getMessageType(), "PLAYERS_COUNT_UPDATE")) {
                         Platform.runLater(() -> {
-                            int roomIdToUpdate = (int) message.getX();
-                            int updatedPlayerCount = (int) message.getY();
+                            int roomIdToUpdate = (int) message.getRoomId();
+                            int updatedPlayerCount = (int) message.getY(); // Updated player count
 
                             for (Label label : playerLabels) {
                                 if (Integer.parseInt(label.getId()) == roomIdToUpdate) {
                                     label.setText("Room " + roomIdToUpdate + " - " + updatedPlayerCount + "/4");
-                                    break; // Znaleziono etykietę dla danego pokoju, aktualizacja zakończona
+                                    break; // Found the label for the room, update completed
                                 }
                             }
                         });
@@ -120,8 +120,8 @@ public class Waiting extends Application {
         threadListener.start();
     }
 
-    private VBox createPlayerLabel(int componentId) {
-        Label label = new Label("Room " + componentId + " - " + "0/4");
+    private VBox createPlayerLabel(int componentId, int userCount) {
+        Label label = new Label("Room " + componentId + " - " + userCount + "/4");
 
         Button joinButton = new Button("Join");
         Button startButton = new Button("Start");
@@ -152,6 +152,17 @@ public class Waiting extends Application {
                 message.setUsername(username);
                 String json = new Gson().toJson(message, Message.class);
                 out.println(json);
+
+                final int roomIndexToUpdate = index;  // Ustalamy finalną zmienną, aby była dostępna w lambdzie
+                // Aktualizacja etykiety po naciśnięciu przycisku "Join"
+                Platform.runLater(() -> {
+                    for (Label tmp : playerLabels) {
+                        if (Integer.parseInt(tmp.getId()) == roomIndexToUpdate) {
+                            tmp.setText("Room " + roomIndexToUpdate + " - " + (tmp.getText() + 1) + "/4");
+                            break; // Znaleziono etykietę dla danego pokoju, aktualizacja zakończona
+                        }
+                    }
+                });
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
