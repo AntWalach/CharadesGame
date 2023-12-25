@@ -37,6 +37,7 @@ public class MainWindow extends Application {
     private long lastClearTime = 0;
     private static final long CLEAR_COOLDOWN = 1000; // Cooldown time in milliseconds
     private boolean drawingPermission = false;
+    ColorPicker colorPicker = new ColorPicker(Color.BLACK);
 
     public MainWindow(String username, int roomId) throws IOException {
         this.username = username;
@@ -105,6 +106,7 @@ public class MainWindow extends Application {
                                 break;
                             case "PERMISSION":
                                 drawingPermission = Objects.equals(message.getChat(), username);
+
                                 break;
                             case "COLOR_CHANGE":
                                 String color = message.getColor();
@@ -112,6 +114,7 @@ public class MainWindow extends Application {
                                 break;
                             case "CLEAR_CHAT":
                                 Platform.runLater(() -> chatArea.clear());
+                                colorPicker.setValue(Color.BLACK);
                                 break;
                             case "CLEAR_LEADERBOARD":
                                 Platform.runLater(() -> chatLabel.setText("Leaderboard"));
@@ -157,7 +160,7 @@ public class MainWindow extends Application {
         Button clearButton = new Button("Clear");
         clearButton.setOnAction(e -> handleClearButtonClick());
 
-        ColorPicker colorPicker = new ColorPicker(Color.BLACK);
+        //ColorPicker colorPicker = new ColorPicker(Color.BLACK);
 
         colorPicker.setOnAction(e -> {
             Color newColor = colorPicker.getValue();
