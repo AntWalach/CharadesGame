@@ -17,9 +17,7 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Waiting extends Application {
     String username;
@@ -29,8 +27,11 @@ public class Waiting extends Application {
     Socket serverSocket = new Socket("localhost", PORT);
     private volatile boolean isListening = true; // Flag to control the listening thread
     private List<Label> playerLabels = new ArrayList<>();
+    private Map<Integer, Button> startButtons = new HashMap<>();
+    private Map<Integer, Button> joinButtons = new HashMap<>();
 
     Label roomLabel;
+    Button startButton;
 
     public Waiting(String username) throws IOException {
         this.username = username;
@@ -136,6 +137,12 @@ public class Waiting extends Application {
                             }
                         });
                     } else if (Objects.equals(message.getMessageType(), "START")) {
+                        Button specificStartButton = startButtons.get(message.getRoomId());
+                        Button specificJoinButton = joinButtons.get(message.getRoomId());
+                        if (specificStartButton != null && specificJoinButton != null) {
+                            specificStartButton.setDisable(true);
+                            specificJoinButton.setDisable(true);
+                        }
                         if(Objects.equals(message.getRoomId(), roomId)) {
                             Platform.runLater(() -> {
                                 try {
@@ -161,7 +168,7 @@ public class Waiting extends Application {
         Label label = new Label("Room " + componentId + " - " + userCount + " player/s");
 
         Button joinButton = new Button("Join");
-        Button startButton = new Button("Start");
+        startButton = new Button("Start");
 
         joinButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
         startButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
@@ -169,6 +176,9 @@ public class Waiting extends Application {
         label.setId(String.valueOf(componentId));
         joinButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Join"
         startButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Start"
+
+        startButtons.put(componentId, startButton); // Dodanie przycisku "Start" do struktury danych
+        joinButtons.put(componentId, joinButton); // Dodanie przycisku "Start" do struktury danych
 
         VBox labelLayout = new VBox(5, label, joinButton, startButton);
         labelLayout.setPadding(new Insets(10));
@@ -189,18 +199,6 @@ public class Waiting extends Application {
                 message.setUsername(username);
                 String json = new Gson().toJson(message, Message.class);
                 out.println(json);
-
-                final int roomIndexToUpdate = index;  // Ustalamy finalną zmienną, aby była dostępna w lambdzie
-                // Aktualizacja etykiety po naciśnięciu przycisku "Join"
-                Platform.runLater(() -> {
-                    for (Label tmp : playerLabels) {
-                        if (Integer.parseInt(tmp.getId()) == roomIndexToUpdate) {
-                            //tmp.setText("Room " + roomIndexToUpdate + " - " + (tmp.getText() + 1));
-                            tmp.setText("tutaj");
-                            break; // Znaleziono etykietę dla danego pokoju, aktualizacja zakończona
-                        }
-                    }
-                });
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
