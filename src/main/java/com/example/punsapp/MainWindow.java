@@ -131,6 +131,15 @@ public class MainWindow extends Application {
                             case "CLEAR_WORD_LABEL":
                                 Platform.runLater(() -> wordLabel.setText(""));
                                 break;
+                            case "END_GAME":
+                                Platform.runLater(() -> {
+                                    try {
+                                        openWaitingRoom(username);
+                                        primaryStage.close();
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                });
                             default:
                                 String messageUsername = message.getUsername();
                                 String finalMessage = message.getChat();
@@ -362,5 +371,10 @@ public class MainWindow extends Application {
         message.setColor(color.toString()); // Convert Color to String for simplicity
 
         sendMessage(message, serverSocket);
+    }
+
+    private void openWaitingRoom(String username) throws IOException {
+        Waiting waiting = new Waiting(username);
+        waiting.start(new Stage());
     }
 }
