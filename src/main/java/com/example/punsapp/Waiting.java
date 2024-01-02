@@ -9,6 +9,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -27,6 +30,8 @@ public class Waiting extends Application {
     private volatile boolean isListening = true; // Flag to control the listening thread
     private List<Label> playerLabels = new ArrayList<>();
 
+    Label roomLabel;
+
     public Waiting(String username) throws IOException {
         this.username = username;
         waitingPlayersCount = 0;
@@ -42,13 +47,28 @@ public class Waiting extends Application {
         scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background-color: transparent;");
 
-        layout.setAlignment(Pos.TOP_RIGHT);
-        layout.setPadding(new Insets(20));
-        layout.setStyle("-fx-background-color: #F2F1EB");
+        HBox topRow = new HBox(10); // HBox for top row alignment
+        topRow.setAlignment(Pos.CENTER_LEFT); // Align items to the left
+        topRow.setPadding(new Insets(20));
+
+        roomLabel = new Label("Room :");
+        roomLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+
+        topRow.getChildren().add(roomLabel); // Add roomLabel to the top row
+
+        // Spacer to push the button to the right
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button leaveRoomButton = new Button("Leave room");
+        leaveRoomButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
 
         Button createButton = new Button("Create");
         createButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
-        layout.getChildren().add(createButton);
+
+        topRow.getChildren().addAll(spacer, leaveRoomButton, createButton); // Add spacer and createButton to the top row
+
+        layout.getChildren().add(topRow); // Add the top row (HBox) to the main VBox
 
         Scene scene = new Scene(scrollPane, 600, 450);
         primaryStage.setScene(scene);
@@ -76,6 +96,23 @@ public class Waiting extends Application {
                     }
                 });
 
+                leaveRoomButton.setOnAction(e -> {
+                    if (!username.isEmpty()) {
+                        try {
+                            PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+                            Message message = new Message();
+                            message.setRoomId(roomId);
+                            message.setMessageType("LEAVE_ROOM");
+                            message.setUsername(username);
+                            String json = gson.toJson(message);
+                            out.println(json);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+                    roomId = 0;
+                });
+
                 while (isListening && (messageServer = in.readLine()) != null) {
                     System.out.println("Received message from server: " + messageServer);
 
@@ -93,7 +130,7 @@ public class Waiting extends Application {
 
                             for (Label label : playerLabels) {
                                 if (Integer.parseInt(label.getId()) == roomIdToUpdate) {
-                                    label.setText("Room " + roomIdToUpdate + " - " + updatedPlayerCount + "/4");
+                                    label.setText("Room " + roomIdToUpdate + " - " + updatedPlayerCount + " player/s");
                                     break; // Found the label for the room, update completed
                                 }
                             }
@@ -121,7 +158,7 @@ public class Waiting extends Application {
     }
 
     private VBox createPlayerLabel(int componentId, int userCount) {
-        Label label = new Label("Room " + componentId + " - " + userCount + "/4");
+        Label label = new Label("Room " + componentId + " - " + userCount + " player/s");
 
         Button joinButton = new Button("Join");
         Button startButton = new Button("Start");
@@ -158,7 +195,8 @@ public class Waiting extends Application {
                 Platform.runLater(() -> {
                     for (Label tmp : playerLabels) {
                         if (Integer.parseInt(tmp.getId()) == roomIndexToUpdate) {
-                            tmp.setText("Room " + roomIndexToUpdate + " - " + (tmp.getText() + 1) + "/4");
+                            //tmp.setText("Room " + roomIndexToUpdate + " - " + (tmp.getText() + 1));
+                            tmp.setText("tutaj");
                             break; // Znaleziono etykietę dla danego pokoju, aktualizacja zakończona
                         }
                     }
@@ -172,9 +210,6 @@ public class Waiting extends Application {
             Button clickedButton = (Button) event.getSource();
             String buttonId = clickedButton.getId();
             int index = Integer.parseInt(buttonId);
-            // Tu możesz wykonać działania na przycisku "Start" z identyfikatorem "index"
-            System.out.println("start przycisk " + index);
-
 
                 try {
                     PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
