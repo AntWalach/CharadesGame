@@ -19,13 +19,18 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 
-public class Waiting extends Application {
+// This class represents the waiting room GUI
+public class WaitingRoom extends Application {
+    // Instance variables
     String username;
     int roomId = 0;
     int waitingPlayersCount;
+
     private static final int PORT = 3000;
     Socket serverSocket = new Socket("localhost", PORT);
     private volatile boolean isListening = true; // Flag to control the listening thread
+
+    // Lists to manage GUI components dynamically
     private List<Label> playerLabels = new ArrayList<>();
     private Map<Integer, Button> startButtons = new HashMap<>();
     private Map<Integer, Button> joinButtons = new HashMap<>();
@@ -33,14 +38,18 @@ public class Waiting extends Application {
     Label roomLabel;
     Button startButton;
 
-    public Waiting(String username) throws IOException {
+    // Constructor initializing Waiting instance with a username
+    public WaitingRoom(String username) throws IOException {
         this.username = username;
         waitingPlayersCount = 0;
     }
 
+    // Method to set up the waiting room GUI
     public void start(Stage primaryStage) throws IOException {
+        // Setting up the main window
         primaryStage.setTitle("Charades Game - Waiting room");
 
+        // Creating a scrollable layout for the Waiting room
         ScrollPane scrollPane = new ScrollPane();
         VBox layout = new VBox(10);
         scrollPane.setContent(layout);
@@ -48,6 +57,7 @@ public class Waiting extends Application {
         scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background-color: transparent;");
 
+        // Creating the top row containing room label and buttons
         HBox topRow = new HBox(10); // HBox for top row alignment
         topRow.setAlignment(Pos.CENTER_LEFT); // Align items to the left
         topRow.setPadding(new Insets(20));
@@ -61,27 +71,33 @@ public class Waiting extends Application {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Buttons for leaving room and creating a new room
         Button leaveRoomButton = new Button("Leave room");
         leaveRoomButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
 
         Button createButton = new Button("Create");
         createButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
 
+        // Adding elements to the top row
         topRow.getChildren().addAll(spacer, leaveRoomButton, createButton); // Add spacer and createButton to the top row
 
         layout.getChildren().add(topRow); // Add the top row (HBox) to the main VBox
 
+        // Creating the scene and displaying the window
         Scene scene = new Scene(scrollPane, 600, 450);
         primaryStage.setScene(scene);
         primaryStage.show();
 
+        // Thread to listen for server messages
         Thread threadListener = new Thread(() -> {
             try {
+                // Setting up input stream to receive messages from the server
                 BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
                 String messageServer;
 
                 Gson gson = new Gson();
 
+                // Actions when buttons are clicked
                 createButton.setOnAction(e -> {
                     if (!username.isEmpty()) {
                         try {
@@ -114,6 +130,7 @@ public class Waiting extends Application {
                     roomId = 0;
                 });
 
+                // Listening for messages from the server
                 while (isListening && (messageServer = in.readLine()) != null) {
                     System.out.println("Received message from server: " + messageServer);
 
@@ -160,10 +177,12 @@ public class Waiting extends Application {
                 e.printStackTrace();
             }
         });
+        // Starting the listening thread
         threadListener.setDaemon(true);
         threadListener.start();
     }
 
+    // Method to create player label and associated buttons
     private VBox createPlayerLabel(int componentId, int userCount) {
         Label label = new Label("Room " + componentId + " - " + userCount + " player/s");
 
@@ -174,11 +193,11 @@ public class Waiting extends Application {
         startButton.setStyle("-fx-background-color: #88AB8E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8px 16px;");
 
         label.setId(String.valueOf(componentId));
-        joinButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Join"
-        startButton.setId(String.valueOf(componentId)); // Nadanie ID przyciskowi "Start"
+        joinButton.setId(String.valueOf(componentId));
+        startButton.setId(String.valueOf(componentId));
 
-        startButtons.put(componentId, startButton); // Dodanie przycisku "Start" do struktury danych
-        joinButtons.put(componentId, joinButton); // Dodanie przycisku "Start" do struktury danych
+        startButtons.put(componentId, startButton);
+        joinButtons.put(componentId, joinButton);
 
         VBox labelLayout = new VBox(5, label, joinButton, startButton);
         labelLayout.setPadding(new Insets(10));
@@ -226,10 +245,12 @@ public class Waiting extends Application {
         return labelLayout;
     }
 
+    // Main method (entry point)
     public static void main(String[] args) {
         launch(args);
     }
 
+    // Method to open the main app window
     private void openMainApp(String username, int roomId) throws IOException {
         MainWindow mainApp = new MainWindow(username, roomId);
         try {
@@ -239,6 +260,7 @@ public class Waiting extends Application {
         }
     }
 
+    // Method to stop listening to the server
     public void stopListening() {
         isListening = false;
     }

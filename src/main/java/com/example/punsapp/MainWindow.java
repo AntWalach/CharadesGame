@@ -19,8 +19,9 @@ import java.net.Socket;
 import java.util.Objects;
 
 
+// The main window of the application where the game is played
 public class MainWindow extends Application {
-
+    // Instance variables
     private String username;
     private TextArea chatArea = new TextArea();
     private TextField inputField = new TextField();
@@ -39,12 +40,14 @@ public class MainWindow extends Application {
     private boolean drawingPermission = false;
     ColorPicker colorPicker = new ColorPicker(Color.BLACK);
 
+    // Constructor initializing MainWindow instance with a username and roomId
     public MainWindow(String username, int roomId) throws IOException {
         this.username = username;
         this.roomId = roomId;
         serverSocket = new Socket("localhost", 3000 + roomId);
     }
 
+    // Method called when the window is started
     @Override
     public void start(Stage primaryStage) throws IOException {
 
@@ -78,6 +81,7 @@ public class MainWindow extends Application {
             inputField.clear();
         });
 
+        // Thread to listen for server messages
         Thread serverListenerThread = new Thread(() -> {
             try {
                 BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
@@ -155,12 +159,14 @@ public class MainWindow extends Application {
         serverListenerThread.start();
     }
 
+    // Method to handle received coordinates for drawing on the canvas
     private void handleReceivedCoordinates(double x, double y) {
         Platform.runLater(() -> {
             gc.fillOval(x, y, 3, 3); // Draw a small circle at the received coordinates
         });
     }
 
+    // Method to create the drawing tab
     private Pane createDrawingTab() {
         canvas = new Canvas(600, 400);
         gc = canvas.getGraphicsContext2D();
@@ -169,13 +175,10 @@ public class MainWindow extends Application {
         Button clearButton = new Button("Clear");
         clearButton.setOnAction(e -> handleClearButtonClick());
 
-        //ColorPicker colorPicker = new ColorPicker(Color.BLACK);
-
         colorPicker.setOnAction(e -> {
             Color newColor = colorPicker.getValue();
             setPenColor(newColor);
         });
-
 
         canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
             if (drawingPermission) {
@@ -232,51 +235,7 @@ public class MainWindow extends Application {
         return drawingPane;
     }
 
-    private void updateTimerLabel(int countdownValue) {
-        Platform.runLater(() -> {
-            int minutes = countdownValue / 60;
-            int seconds = countdownValue % 60;
-
-            String formattedTime = String.format("%02d:%02d", minutes, seconds);
-            timerLabel.setText(formattedTime);
-        });
-    }
-
-    private void handleClearButtonClick() {
-        if (drawingPermission) {
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
-                clearCanvas();
-                Message message = new Message();
-                message.setRoomId(roomId);
-                message.setUsername(username);
-                message.setMessageType("CLEAR_CANVAS");
-                sendMessage(message, serverSocket);
-                lastClearTime = currentTime;
-            }
-        }
-    }
-
-    private void clearCanvas() {
-        gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
-        Message message = new Message();
-        message.setRoomId(roomId);
-        message.setUsername(username);
-        message.setMessageType("CLEAR_CANVAS");
-        sendMessage(message, serverSocket);
-    }
-
-    private void setPenColor(Color newColor) {
-        Color currentColor = (Color) gc.getStroke();
-
-        if (!currentColor.equals(newColor)) {
-            gc.setStroke(newColor);
-            gc.setFill(newColor);
-            sendColorToServer(newColor);
-            System.out.println("Local color set: " + newColor);
-        }
-    }
-
+    // Method to create the chat tab
     private Pane createChatTab() {
         BorderPane borderPane = new BorderPane();
 
@@ -325,8 +284,55 @@ public class MainWindow extends Application {
         return borderPane;
     }
 
+    // Method to update the timer label with countdown value
+    private void updateTimerLabel(int countdownValue) {
+        Platform.runLater(() -> {
+            int minutes = countdownValue / 60;
+            int seconds = countdownValue % 60;
 
+            String formattedTime = String.format("%02d:%02d", minutes, seconds);
+            timerLabel.setText(formattedTime);
+        });
+    }
 
+    // Method to handle clearing the canvas
+    private void handleClearButtonClick() {
+        if (drawingPermission) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastClearTime > CLEAR_COOLDOWN) {
+                clearCanvas();
+                Message message = new Message();
+                message.setRoomId(roomId);
+                message.setUsername(username);
+                message.setMessageType("CLEAR_CANVAS");
+                sendMessage(message, serverSocket);
+                lastClearTime = currentTime;
+            }
+        }
+    }
+
+    private void clearCanvas() {
+        gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+        Message message = new Message();
+        message.setRoomId(roomId);
+        message.setUsername(username);
+        message.setMessageType("CLEAR_CANVAS");
+        sendMessage(message, serverSocket);
+    }
+
+    // Method to set the color of the drawing pen
+    private void setPenColor(Color newColor) {
+        Color currentColor = (Color) gc.getStroke();
+
+        if (!currentColor.equals(newColor)) {
+            gc.setStroke(newColor);
+            gc.setFill(newColor);
+            sendColorToServer(newColor);
+            System.out.println("Local color set: " + newColor);
+        }
+    }
+
+    // Method to send messages to the server
     private void sendMessage(Message message, Socket serverSocket) {
         try {
             PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
@@ -341,6 +347,7 @@ public class MainWindow extends Application {
         }
     }
 
+    // Methods to send specific types of messages to the server (chat, coordinates, color change)
     private void sendChat(String chat) {
         Message message = new Message();
         message.setRoomId(roomId);
@@ -373,8 +380,9 @@ public class MainWindow extends Application {
         sendMessage(message, serverSocket);
     }
 
+    // Method to open the waiting room window
     private void openWaitingRoom(String username) throws IOException {
-        Waiting waiting = new Waiting(username);
-        waiting.start(new Stage());
+        WaitingRoom waitingRoom = new WaitingRoom(username);
+        waitingRoom.start(new Stage());
     }
 }
