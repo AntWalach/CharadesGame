@@ -13,7 +13,6 @@ import java.io.IOException;
 
 // Main class extending Application (required for JavaFX applications)
 public class Main extends Application {
-
     // The entry point of the application
     public static void main(String[] args) {
         launch(args);

@@ -17,6 +17,10 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 // This class represents the waiting room GUI
@@ -28,6 +32,7 @@ public class WaitingRoom extends Application {
 
     private static final int PORT = 3000;
     Socket serverSocket = new Socket("localhost", PORT);
+    DatabaseConnection connectNow = new DatabaseConnection();
     private volatile boolean isListening = true; // Flag to control the listening thread
 
     // Lists to manage GUI components dynamically
@@ -49,11 +54,15 @@ public class WaitingRoom extends Application {
         // Setting up the main window
         primaryStage.setTitle("Charades Game - Waiting room");
 
+        // Creating the main layout
+        HBox mainLayout = new HBox(10);
+
         // Creating a scrollable layout for the Waiting room
         ScrollPane scrollPane = new ScrollPane();
         VBox layout = new VBox(10);
         scrollPane.setContent(layout);
-        scrollPane.setFitToWidth(true);
+        //scrollPane.setFitToWidth(true);
+        scrollPane.setPrefWidth(600);
         scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background-color: transparent;");
 
@@ -80,11 +89,17 @@ public class WaitingRoom extends Application {
 
         // Adding elements to the top row
         topRow.getChildren().addAll(spacer, leaveRoomButton, createButton); // Add spacer and createButton to the top row
+        topRow.setPrefWidth(580);
 
         layout.getChildren().add(topRow); // Add the top row (HBox) to the main VBox
 
+        VBox leaderboard = createLeaderboardLayout();
+        fetchAndDisplayLeaderboard(leaderboard);
+
+        mainLayout.getChildren().addAll(scrollPane, leaderboard);
+
         // Creating the scene and displaying the window
-        Scene scene = new Scene(scrollPane, 600, 450);
+        Scene scene = new Scene(mainLayout, 800, 450);
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -123,6 +138,10 @@ public class WaitingRoom extends Application {
                             message.setUsername(username);
                             String json = gson.toJson(message);
                             out.println(json);
+
+                            Platform.runLater(() -> {
+                                roomLabel.setText("Room : ");
+                            });
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }
@@ -218,6 +237,10 @@ public class WaitingRoom extends Application {
                 message.setUsername(username);
                 String json = new Gson().toJson(message, Message.class);
                 out.println(json);
+
+                Platform.runLater(() -> {
+                    roomLabel.setText("Room : " + roomId);
+                });
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -245,9 +268,48 @@ public class WaitingRoom extends Application {
         return labelLayout;
     }
 
-    // Main method (entry point)
-    public static void main(String[] args) {
-        launch(args);
+    // Creating layout for leaderboard
+    private VBox createLeaderboardLayout() {
+        VBox leaderboardLayout = new VBox(10);
+        leaderboardLayout.setPrefWidth(200); // Ustawiamy preferowaną szerokość dla leaderboardu
+        leaderboardLayout.setStyle("-fx-background-color: #E5E7E9;"); // Ustawiamy kolor tła dla leaderboardu
+        leaderboardLayout.setPadding(new Insets(20)); // Dodajemy wypełnienie dla estetyki
+
+        Label leaderboardLabel = new Label("Top 10 players");
+        leaderboardLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+
+        leaderboardLayout.getChildren().addAll(leaderboardLabel);
+
+        return leaderboardLayout;
+    }
+
+    // Fetching leaderboard from database
+    public void fetchAndDisplayLeaderboard(VBox leaderboardLayout) {
+        try {
+            Connection connection = connectNow.getConnection();
+
+            String query = "SELECT username, score FROM charadesleaderboard ORDER BY score DESC FETCH FIRST 10 ROWS ONLY";
+
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            // Printing records in leaderboard layout
+            while (resultSet.next()) {
+                String username = resultSet.getString("username");
+                int score = resultSet.getInt("score");
+
+                // Tworzenie etykiety z danymi i dodanie ich do layoutu leaderboardu
+                Label label = new Label(username + " : " + score);
+                leaderboardLayout.getChildren().add(label);
+            }
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     // Method to open the main app window
@@ -263,6 +325,11 @@ public class WaitingRoom extends Application {
     // Method to stop listening to the server
     public void stopListening() {
         isListening = false;
+    }
+
+    // Main method (entry point)
+    public static void main(String[] args) {
+        launch(args);
     }
 }
 
